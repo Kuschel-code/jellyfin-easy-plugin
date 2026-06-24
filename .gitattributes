@@ -1,0 +1,16 @@
+# Normalize line endings to LF in the repository for all text files.
+* text=auto eol=lf
+
+*.cs    text eol=lf
+*.csproj text eol=lf
+*.slnx  text eol=lf
+*.html  text eol=lf
+*.js    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+
+*.png   binary
+*.dll   binary
+*.zip   binary

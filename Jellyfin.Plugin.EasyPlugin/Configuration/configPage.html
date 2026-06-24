@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Easy Plugin</title>
+</head>
+<body>
+<div id="EasyPluginConfigPage" data-role="page" class="page type-interior pluginConfigurationPage">
+    <div data-role="content">
+        <div class="content-primary">
+
+            <style>
+                #EasyPluginConfigPage { --ep-accent: #00a4dc; }
+                #EasyPluginConfigPage .epHead { margin: 0 0 .3em; }
+                #EasyPluginConfigPage .epSub { opacity: .7; margin: 0 0 1.2em; }
+                #EasyPluginConfigPage .epCard { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+                    border-radius: 10px; padding: 1.1em 1.2em; margin-bottom: 1.1em; }
+                #EasyPluginConfigPage .epHint { opacity: .6; font-size: .9em; margin: .2em 0 1em; }
+                #EasyPluginConfigPage .epWarn { color: #f0ad4e; }
+
+                /* one settings row, always full width, never overlapping */
+                #EasyPluginConfigPage .epRow { display: flex; align-items: center; gap: 1em; width: 100%; box-sizing: border-box;
+                    background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.08); border-radius: 8px;
+                    padding: .6em .9em; margin-bottom: .55em; }
+                #EasyPluginConfigPage .epRow.epDragging { opacity: .5; }
+                #EasyPluginConfigPage .epGrip { cursor: grab; opacity: .5; font-size: 1.2em; flex: 0 0 auto; user-select: none; }
+                #EasyPluginConfigPage .epRowMain { flex: 1 1 auto; min-width: 0; }
+                #EasyPluginConfigPage .epName { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                #EasyPluginConfigPage .epKey { opacity: .45; font-size: .8em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                #EasyPluginConfigPage .epRow.epHidden .epName { opacity: .4; text-decoration: line-through; }
+
+                /* pure-CSS toggle slider (no emby-checkbox web component, which broke the layout) */
+                #EasyPluginConfigPage .epSwitch { position: relative; flex: 0 0 auto; width: 46px; height: 26px; display: inline-block; }
+                #EasyPluginConfigPage .epSwitch input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
+                #EasyPluginConfigPage .epSlider { position: absolute; inset: 0; cursor: pointer; border-radius: 26px;
+                    background: rgba(255,255,255,.25); transition: background .2s; }
+                #EasyPluginConfigPage .epSlider::before { content: ""; position: absolute; height: 20px; width: 20px; left: 3px; top: 3px;
+                    background: #fff; border-radius: 50%; transition: transform .2s; }
+                #EasyPluginConfigPage .epSwitch input:checked + .epSlider { background: var(--ep-accent); }
+                #EasyPluginConfigPage .epSwitch input:checked + .epSlider::before { transform: translateX(20px); }
+                #EasyPluginConfigPage .epSwitch input:focus-visible + .epSlider { outline: 2px solid var(--ep-accent); outline-offset: 2px; }
+
+                #EasyPluginConfigPage .epToggleRow { display: flex; align-items: center; gap: 1em; }
+                #EasyPluginConfigPage .epToggleMain { flex: 1 1 auto; min-width: 0; }
+                #EasyPluginConfigPage .epEmpty { opacity: .6; padding: 1.6em; text-align: center; }
+                #EasyPluginConfigPage .epStatus { height: 1.2em; font-size: .85em; opacity: 0; transition: opacity .2s; color: #66bb6a; }
+                #EasyPluginConfigPage .epStatus.show { opacity: .85; }
+            </style>
+
+            <h2 class="epHead">Easy Plugin</h2>
+            <p class="epSub">Choose which plugin entries appear in the admin sidebar, and drag to reorder them. Changes are saved automatically.</p>
+
+            <div class="epCard">
+                <div class="epToggleRow">
+                    <label class="epSwitch">
+                        <input type="checkbox" id="epEnabled" />
+                        <span class="epSlider"></span>
+                    </label>
+                    <div class="epToggleMain">
+                        <div>Enable sidebar tweaks</div>
+                        <div class="epHint" style="margin:0;">When off, the sidebar is left untouched.</div>
+                    </div>
+                </div>
+                <div id="epWarn" class="epHint epWarn" style="display:none; margin:.8em 0 0;"></div>
+            </div>
+
+            <div class="epCard">
+                <p class="epHint">Turn an entry off to hide it. Drag the handle to change the order (top = first).</p>
+                <div id="epList"><div class="epEmpty">Loading&hellip;</div></div>
+            </div>
+
+            <div class="epStatus" id="epStatus"></div>
+
+            <script type="text/javascript">
+                (function () {
+                    var pluginId = "f4acffe0-0347-4b20-a69d-d50d6b2b4a7e";
+                    var SELF = "EasyPlugin";
+                    var page = document.querySelector('#EasyPluginConfigPage');
+                    var saveTimer = null;
+                    var statusTimer = null;
+
+                    function esc(s) {
+                        return String(s == null ? '' : s)
+                            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                    }
+
+                    // ConfigurationPages can come back PascalCase or camelCase depending on the build.
+                    function pageName(p) { return p.Name != null ? p.Name : p.name; }
+                    function pageDisplay(p) { return p.DisplayName || p.displayName || pageName(p); }
+
+                    function getConfigPages() {
+                        return ApiClient.getJSON(ApiClient.getUrl('web/ConfigurationPages', { enableInMainMenu: true }))
+                            .catch(function () {
+                                return ApiClient.getJSON(ApiClient.getUrl('web/ConfigurationPages'))
+                                    .catch(function () { return []; });
+                            });
+                    }
+
+                    function setStatus(text) {
+                        var el = page.querySelector('#epStatus');
+                        el.textContent = text;
+                        el.classList.add('show');
+                        if (statusTimer) { clearTimeout(statusTimer); }
+                        statusTimer = setTimeout(function () { el.classList.remove('show'); }, 1500);
+                    }
+
+                    function rowHtml(name, display, hidden) {
+                        var cls = 'epRow' + (hidden ? ' epHidden' : '');
+                        return '<div class="' + cls + '" draggable="true" data-name="' + esc(name) + '">' +
+                            '<span class="epGrip" title="Drag to reorder">⠿</span>' +
+                            '<div class="epRowMain">' +
+                                '<div class="epName">' + esc(display) + '</div>' +
+                                '<div class="epKey">' + esc(name) + '</div>' +
+                            '</div>' +
+                            '<label class="epSwitch" title="Show in sidebar">' +
+                                '<input type="checkbox" class="epVis" ' + (hidden ? '' : 'checked') + ' />' +
+                                '<span class="epSlider"></span>' +
+                            '</label>' +
+                        '</div>';
+                    }
+
+                    function render(pages, cfg) {
+                        var hidden = cfg.Hidden || [];
+                        var order = (cfg.Order && cfg.Order.length) ? cfg.Order : pages.map(pageName);
+
+                        var sorted = pages.slice().sort(function (a, b) {
+                            var ia = order.indexOf(pageName(a)); if (ia < 0) { ia = order.length; }
+                            var ib = order.indexOf(pageName(b)); if (ib < 0) { ib = order.length; }
+                            return ia - ib;
+                        });
+
+                        var list = page.querySelector('#epList');
+                        if (!sorted.length) {
+                            list.innerHTML = '<div class="epEmpty">No plugin pages found.</div>';
+                            return;
+                        }
+                        list.innerHTML = sorted.map(function (p) {
+                            var n = pageName(p);
+                            return rowHtml(n, pageDisplay(p), hidden.indexOf(n) >= 0);
+                        }).join('');
+                        wireRows(list);
+                    }
+
+                    function wireRows(list) {
+                        var dragged = null;
+                        list.querySelectorAll('.epRow').forEach(function (row) {
+                            row.addEventListener('dragstart', function () { dragged = row; row.classList.add('epDragging'); });
+                            row.addEventListener('dragend', function () {
+                                row.classList.remove('epDragging'); dragged = null; scheduleSave();
+                            });
+                            row.addEventListener('dragover', function (e) {
+                                e.preventDefault();
+                                var target = e.target.closest('.epRow');
+                                if (!target || target === dragged || !dragged) { return; }
+                                var rect = target.getBoundingClientRect();
+                                var after = (e.clientY - rect.top) > rect.height / 2;
+                                list.insertBefore(dragged, after ? target.nextSibling : target);
+                            });
+                            var vis = row.querySelector('.epVis');
+                            if (vis) {
+                                vis.addEventListener('change', function (e) {
+                                    row.classList.toggle('epHidden', !e.target.checked);
+                                    scheduleSave();
+                                });
+                            }
+                        });
+                    }
+
+                    function scheduleSave() {
+                        if (saveTimer) { clearTimeout(saveTimer); }
+                        setStatus('Saving…');
+                        saveTimer = setTimeout(save, 400);
+                    }
+
+                    function save() {
+                        ApiClient.getPluginConfiguration(pluginId).then(function (cfg) {
+                            var rows = Array.prototype.slice.call(page.querySelectorAll('.epRow'));
+                            cfg.Enabled = page.querySelector('#epEnabled').checked;
+                            cfg.Order = rows.map(function (r) { return r.getAttribute('data-name'); });
+                            cfg.Hidden = rows.filter(function (r) {
+                                var v = r.querySelector('.epVis');
+                                return v && !v.checked;
+                            }).map(function (r) { return r.getAttribute('data-name'); });
+                            ApiClient.updatePluginConfiguration(pluginId, cfg).then(function () {
+                                setStatus('Saved');
+                            });
+                        });
+                    }
+
+                    function load() {
+                        Dashboard.showLoadingMsg();
+                        Promise.all([getConfigPages(), ApiClient.getPluginConfiguration(pluginId)])
+                            .then(function (res) {
+                                var pages = res[0] || [];
+                                var cfg = res[1] || {};
+                                page.querySelector('#epEnabled').checked = cfg.Enabled !== false;
+                                var warn = page.querySelector('#epWarn');
+                                if (!pages.length) {
+                                    warn.style.display = '';
+                                    warn.textContent = 'Could not load the list of plugin pages from the server.';
+                                } else {
+                                    warn.style.display = 'none';
+                                }
+                                render(pages, cfg);
+                                Dashboard.hideLoadingMsg();
+                            })
+                            .catch(function () { Dashboard.hideLoadingMsg(); });
+                    }
+
+                    page.querySelector('#epEnabled').addEventListener('change', scheduleSave);
+                    page.addEventListener('pageshow', load);
+                    load();
+                })();
+            </script>
+        </div>
+    </div>
+</div>
+</body>
+</html>

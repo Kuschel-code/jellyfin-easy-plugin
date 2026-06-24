@@ -1,0 +1,12 @@
+[
+  {
+    "guid": "f4acffe0-0347-4b20-a69d-d50d6b2b4a7e",
+    "name": "Easy Plugin",
+    "description": "Show, hide and reorder plugin configuration entries in the Jellyfin admin sidebar. The client script is injected in-memory via the File Transformation plugin, so index.html is never patched on disk.",
+    "overview": "Tidy the admin sidebar: hide and reorder plugin entries.",
+    "owner": "Kuschel-code",
+    "category": "General",
+    "imageUrl": "",
+    "versions": []
+  }
+]

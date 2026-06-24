@@ -1,0 +1,19 @@
+---
+name: "Easy Plugin"
+guid: "f4acffe0-0347-4b20-a69d-d50d6b2b4a7e"
+version: "0.0.1.0"
+targetAbi: "10.11.0.0"
+framework: "net9.0"
+owner: "Kuschel-code"
+overview: "Show, hide and reorder plugin entries in the Jellyfin admin sidebar."
+description: >
+  Lets you choose which plugin configuration entries are visible in the admin
+  sidebar and in what order, from the plugin's own settings page. The client
+  script is injected in-memory via the File Transformation plugin, so index.html
+  is never patched on disk and server updates never overwrite it.
+category: "General"
+artifacts:
+  - "Jellyfin.Plugin.EasyPlugin.dll"
+changelog: >
+  0.0.1.0 - First release. Hide and drag-reorder sidebar plugin entries from the
+  configuration page; client script injected via File Transformation (callback mode).
