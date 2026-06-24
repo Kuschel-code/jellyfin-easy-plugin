@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Plugins;
@@ -10,16 +12,16 @@ using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Model.Updates;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 
 namespace Jellyfin.Plugin.EasyPlugin;
 
 /// <summary>
 /// On startup, makes sure the <c>index.html</c> transformation is registered:
 /// <list type="bullet">
-/// <item>If the File Transformation plugin is loaded, register via its callback API (preferred).</item>
-/// <item>If it is installed but not yet loaded, ask the user to restart.</item>
-/// <item>If it is missing entirely, install it automatically from its official repository;
+/// <item>If one or more File Transformation providers are loaded, register with <b>all</b> of them
+/// (the standalone plugin and/or a bundled copy such as Custom Theme's) so the active one applies it.</item>
+/// <item>If File Transformation is installed but not yet loaded, ask the user to restart.</item>
+/// <item>If no provider is present at all, install the File Transformation plugin automatically;
 /// Easy Plugin then activates after the next restart.</item>
 /// </list>
 /// There is no on-disk fallback by design (the container's jellyfin-web is typically read-only).
@@ -27,6 +29,7 @@ namespace Jellyfin.Plugin.EasyPlugin;
 public class StartupService : IHostedService
 {
     private const string FtAssemblyMarker = ".FileTransformation";
+    private const string FtTypeName = "Jellyfin.Plugin.FileTransformation.PluginInterface";
     private const string FtRepoName = "File Transformation (added by Easy Plugin)";
     private const string FtRepoUrl = "https://www.iamparadox.dev/jellyfin/plugins/manifest.json";
     private static readonly Guid FtPluginId = Guid.Parse("5e87cc92-571a-4d8d-8d98-d2d4147f9f90");
@@ -60,19 +63,24 @@ public class StartupService : IHostedService
     {
         try
         {
-            // File Transformation loads into its own AssemblyLoadContext, so scan every context.
-            var ftAssembly = AssemblyLoadContext.All
+            // Every assembly that exposes the File Transformation entrypoint. There can be more
+            // than one (the standalone plugin AND a bundled copy, e.g. Custom Theme's). Only one is
+            // the active file-serving interceptor, and which one is non-deterministic across
+            // restarts, so we register with all of them; the active one wins and the rest are no-ops.
+            var ftAssemblies = AssemblyLoadContext.All
                 .SelectMany(alc => alc.Assemblies)
-                .FirstOrDefault(a => a.FullName?.Contains(FtAssemblyMarker, StringComparison.Ordinal) ?? false);
+                .Where(a => a.FullName?.Contains(FtAssemblyMarker, StringComparison.Ordinal) ?? false)
+                .Distinct()
+                .ToList();
 
-            if (ftAssembly is not null)
+            if (ftAssemblies.Count > 0)
             {
-                // External File Transformation is present and loaded -> use it (our auto-install stays off).
-                RegisterWithFileTransformation(ftAssembly);
+                RegisterWithAll(ftAssemblies);
                 return;
             }
 
-            // Not loaded. If it is already installed (pending a restart), don't reinstall.
+            // No provider loaded. If File Transformation is already installed (pending a restart),
+            // don't reinstall.
             if (_pluginManager.Plugins.Any(p => p.Id.Equals(FtPluginId)))
             {
                 _logger.LogInformation(
@@ -97,31 +105,69 @@ public class StartupService : IHostedService
     /// <inheritdoc />
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    private void RegisterWithFileTransformation(Assembly ftAssembly)
+    private void RegisterWithAll(IReadOnlyList<Assembly> ftAssemblies)
     {
-        var pluginInterface = ftAssembly.GetType("Jellyfin.Plugin.FileTransformation.PluginInterface");
-        var register = pluginInterface?.GetMethod("RegisterTransformation");
-        if (register is null)
-        {
-            _logger.LogWarning(
-                "Easy Plugin: FileTransformation.PluginInterface.RegisterTransformation not found; " +
-                "the File Transformation API may have changed.");
-            return;
-        }
-
         // Callback mode: File Transformation loads this assembly/type and invokes the named static
         // method, passing { "contents": "<index.html>" } and serving its return value.
-        var payload = new JObject
+        var payloadJson = JsonSerializer.Serialize(new Dictionary<string, string?>
         {
-            { "id", Plugin.Instance!.Id.ToString() },
-            { "fileNamePattern", "index.html" },
-            { "callbackAssembly", typeof(Plugin).Assembly.FullName },
-            { "callbackClass", typeof(TransformationPatches).FullName },
-            { "callbackMethod", nameof(TransformationPatches.IndexHtml) }
-        };
+            ["id"] = Plugin.Instance!.Id.ToString(),
+            ["fileNamePattern"] = "index.html",
+            ["callbackAssembly"] = typeof(Plugin).Assembly.FullName,
+            ["callbackClass"] = typeof(TransformationPatches).FullName,
+            ["callbackMethod"] = nameof(TransformationPatches.IndexHtml)
+        });
 
-        register.Invoke(null, new object?[] { payload });
-        _logger.LogInformation("Easy Plugin: registered the index.html transformation with File Transformation.");
+        var registered = 0;
+        foreach (var asm in ftAssemblies)
+        {
+            try
+            {
+                var pluginInterface = asm.GetType(FtTypeName);
+                var register = pluginInterface?.GetMethod("RegisterTransformation");
+                if (register is null)
+                {
+                    continue;
+                }
+
+                // Build the payload to match THIS provider's parameter type:
+                //  - object / string param (e.g. Custom Theme's bundled provider, which does
+                //    payload.ToString() + System.Text.Json) -> pass the JSON string directly.
+                //  - Newtonsoft JObject param (the standalone File Transformation plugin) -> build
+                //    it via that exact type's static Parse(string) so the type identity matches.
+                var payloadType = register.GetParameters()[0].ParameterType;
+                object? payload;
+                if (payloadType.IsAssignableFrom(typeof(string)))
+                {
+                    payload = payloadJson;
+                }
+                else
+                {
+                    var parse = payloadType.GetMethod("Parse", new[] { typeof(string) });
+                    payload = parse?.Invoke(null, new object[] { payloadJson });
+                }
+
+                if (payload is null)
+                {
+                    continue;
+                }
+
+                register.Invoke(null, new[] { payload });
+                registered++;
+                _logger.LogInformation(
+                    "Easy Plugin: registered the index.html transformation with File Transformation provider '{Assembly}'.",
+                    asm.GetName().Name);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Easy Plugin: registration with provider '{Assembly}' failed.", asm.GetName().Name);
+            }
+        }
+
+        if (registered == 0)
+        {
+            _logger.LogWarning("Easy Plugin: no File Transformation provider accepted the registration.");
+        }
     }
 
     private async Task EnsureFileTransformationInstalledAsync(CancellationToken cancellationToken)
@@ -149,8 +195,6 @@ public class StartupService : IHostedService
             return;
         }
 
-        // Downloads the zip, verifies its MD5 against the manifest, extracts it, then flags a
-        // pending restart. The plugin does NOT load in this process.
         await _installationManager.InstallPackage(target, cancellationToken).ConfigureAwait(false);
         _logger.LogInformation(
             "Easy Plugin: installed File Transformation {Version}. Restart Jellyfin to activate the sidebar tweaks.",

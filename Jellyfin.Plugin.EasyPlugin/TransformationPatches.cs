@@ -1,5 +1,4 @@
 using System;
-using Newtonsoft.Json;
 
 namespace Jellyfin.Plugin.EasyPlugin;
 
@@ -15,8 +14,8 @@ public static class TransformationPatches
 
     /// <summary>
     /// Injects the Easy Plugin client script just before the closing <c>&lt;/body&gt;</c> tag.
-    /// The method must be <c>public static</c> and return <see cref="string"/> — this is the
-    /// contract File Transformation invokes by reflection.
+    /// Must be <c>public static</c> and return <see cref="string"/> — the contract File
+    /// Transformation invokes by reflection.
     /// </summary>
     /// <param name="content">The payload carrying the current file contents.</param>
     /// <returns>The transformed (or, if there is nothing to do, unchanged) file contents.</returns>
@@ -28,7 +27,7 @@ public static class TransformationPatches
             return html ?? string.Empty;
         }
 
-        // Idempotent: never inject twice if the file is transformed more than once.
+        // Idempotent: never inject twice (e.g. if more than one provider applies the transform).
         if (html.Contains(Injection, StringComparison.Ordinal))
         {
             return html;
@@ -41,13 +40,12 @@ public static class TransformationPatches
 }
 
 /// <summary>
-/// The argument File Transformation deserializes (via Newtonsoft.Json) before invoking the
-/// callback. The JSON field is exactly <c>contents</c>; the Newtonsoft attribute makes the
-/// mapping explicit rather than relying on case-insensitive fallback.
+/// The argument File Transformation deserializes (via its own Newtonsoft) before invoking the
+/// callback. The JSON field is <c>contents</c>; Newtonsoft binds it to this property
+/// case-insensitively, so no serializer attribute (and no Newtonsoft reference) is needed.
 /// </summary>
 public class PatchRequestPayload
 {
     /// <summary>Gets or sets the current file contents.</summary>
-    [JsonProperty("contents")]
     public string? Contents { get; set; }
 }

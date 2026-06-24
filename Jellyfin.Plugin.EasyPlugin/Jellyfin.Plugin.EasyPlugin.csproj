@@ -16,15 +16,6 @@
 
   <ItemGroup>
     <PackageReference Include="Jellyfin.Controller" Version="10.11.11" />
-    <!--
-      File Transformation's RegisterTransformation(JObject) expects a Newtonsoft JObject.
-      We reference Newtonsoft.Json for COMPILE ONLY (ExcludeAssets="runtime") and never ship
-      the DLL: the server already provides Newtonsoft.Json (File Transformation itself relies
-      on it). This guarantees our JObject is the SAME assembly instance File Transformation
-      uses across AssemblyLoadContexts — shipping our own copy would make the reflected
-      RegisterTransformation(JObject) call fail with a type-identity mismatch.
-    -->
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" ExcludeAssets="runtime" />
   </ItemGroup>
 
   <!-- The API controller needs ASP.NET Core types; the server provides them at runtime. -->
