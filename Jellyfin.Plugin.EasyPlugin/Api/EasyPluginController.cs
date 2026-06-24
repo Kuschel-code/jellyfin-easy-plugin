@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,7 @@ namespace Jellyfin.Plugin.EasyPlugin.Api;
 /// <summary>
 /// Serves the client script (injected into <c>index.html</c>) and the current configuration.
 /// Both endpoints are anonymous: a <c>&lt;script src&gt;</c> tag carries no auth token, and only
-/// the non-sensitive hidden/order name lists are exposed.
+/// the non-sensitive hidden/order/added name lists are exposed.
 /// </summary>
 [ApiController]
 [Route("EasyPlugin")]
@@ -31,7 +32,7 @@ public class EasyPluginController : ControllerBase
     }
 
     /// <summary>Returns the current configuration for the client script.</summary>
-    /// <returns>The enabled flag and the hidden/order name lists.</returns>
+    /// <returns>The enabled flag, the hidden/order name lists, and the force-added pages.</returns>
     [HttpGet("Config")]
     [AllowAnonymous]
     [Produces("application/json")]
@@ -42,7 +43,8 @@ public class EasyPluginController : ControllerBase
         {
             enabled = c.Enabled,
             hidden = c.Hidden,
-            order = c.Order
+            order = c.Order,
+            added = c.Added.Select(a => new { name = a.Name, display = a.DisplayName })
         });
     }
 }

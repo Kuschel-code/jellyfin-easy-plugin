@@ -17,18 +17,22 @@
                 #EasyPluginConfigPage .epHint { opacity: .6; font-size: .9em; margin: .2em 0 1em; }
                 #EasyPluginConfigPage .epWarn { color: #f0ad4e; }
 
-                /* one settings row, always full width, never overlapping */
-                #EasyPluginConfigPage .epRow { display: flex; align-items: center; gap: 1em; width: 100%; box-sizing: border-box;
-                    background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.08); border-radius: 8px;
-                    padding: .6em .9em; margin-bottom: .55em; }
+                #EasyPluginConfigPage .epRowWrap { margin-bottom: .55em; }
+                #EasyPluginConfigPage .epRow { display: flex; align-items: center; gap: .8em; width: 100%; box-sizing: border-box;
+                    background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: .55em .8em; }
                 #EasyPluginConfigPage .epRow.epDragging { opacity: .5; }
                 #EasyPluginConfigPage .epGrip { cursor: grab; opacity: .5; font-size: 1.2em; flex: 0 0 auto; user-select: none; }
+                #EasyPluginConfigPage .epArrow { flex: 0 0 auto; cursor: pointer; opacity: .6; background: none; border: 0; color: inherit;
+                    font-size: 1em; width: 1.6em; height: 1.6em; border-radius: 4px; transition: transform .15s, opacity .15s; }
+                #EasyPluginConfigPage .epArrow:hover { opacity: 1; background: rgba(255,255,255,.08); }
+                #EasyPluginConfigPage .epArrow.epOpen { transform: rotate(90deg); opacity: 1; }
                 #EasyPluginConfigPage .epRowMain { flex: 1 1 auto; min-width: 0; }
                 #EasyPluginConfigPage .epName { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                 #EasyPluginConfigPage .epKey { opacity: .45; font-size: .8em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                #EasyPluginConfigPage .epExtra { display: inline-block; font-size: .68em; font-weight: 600; text-transform: uppercase;
+                    letter-spacing: .04em; color: var(--ep-accent); border: 1px solid var(--ep-accent); border-radius: 4px; padding: 0 .4em; margin-left: .5em; vertical-align: middle; }
                 #EasyPluginConfigPage .epRow.epHidden .epName { opacity: .4; text-decoration: line-through; }
 
-                /* pure-CSS toggle slider (no emby-checkbox web component, which broke the layout) */
                 #EasyPluginConfigPage .epSwitch { position: relative; flex: 0 0 auto; width: 46px; height: 26px; display: inline-block; }
                 #EasyPluginConfigPage .epSwitch input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
                 #EasyPluginConfigPage .epSlider { position: absolute; inset: 0; cursor: pointer; border-radius: 26px;
@@ -37,7 +41,24 @@
                     background: #fff; border-radius: 50%; transition: transform .2s; }
                 #EasyPluginConfigPage .epSwitch input:checked + .epSlider { background: var(--ep-accent); }
                 #EasyPluginConfigPage .epSwitch input:checked + .epSlider::before { transform: translateX(20px); }
-                #EasyPluginConfigPage .epSwitch input:focus-visible + .epSlider { outline: 2px solid var(--ep-accent); outline-offset: 2px; }
+
+                #EasyPluginConfigPage .epEmbed { display: none; border: 1px solid rgba(255,255,255,.08); border-top: 0;
+                    border-radius: 0 0 8px 8px; margin: -.2em .4em 0; background: rgba(0,0,0,.25); overflow: hidden; }
+                #EasyPluginConfigPage .epEmbed.epEmbedOpen { display: block; }
+                #EasyPluginConfigPage .epEmbed iframe { width: 100%; height: 540px; border: 0; display: block; background: transparent; }
+
+                /* collapsible group for plugins with multiple settings pages */
+                #EasyPluginConfigPage .epGroup { border: 1px solid rgba(255,255,255,.08); border-radius: 8px; margin-bottom: .55em; overflow: hidden; }
+                #EasyPluginConfigPage .epGroupHead { display: flex; align-items: center; gap: .7em; padding: .6em .8em; cursor: pointer;
+                    background: rgba(255,255,255,.06); }
+                #EasyPluginConfigPage .epGroupCaret { transition: transform .15s; opacity: .7; flex: 0 0 auto; }
+                #EasyPluginConfigPage .epGroup.epCollapsed .epGroupCaret { transform: rotate(-90deg); }
+                #EasyPluginConfigPage .epGroupName { font-weight: 600; flex: 1 1 auto; }
+                #EasyPluginConfigPage .epGroupCount { opacity: .5; font-size: .8em; font-weight: 400; margin-left: .4em; }
+                #EasyPluginConfigPage .epGroupBody { padding: .5em .5em .1em; }
+                #EasyPluginConfigPage .epGroup.epCollapsed .epGroupBody { display: none; }
+                #EasyPluginConfigPage .epGroupBody .epRowWrap { margin-bottom: .4em; }
+                #EasyPluginConfigPage .epGroupBody .epRow { background: rgba(255,255,255,.02); }
 
                 #EasyPluginConfigPage .epToggleRow { display: flex; align-items: center; gap: 1em; }
                 #EasyPluginConfigPage .epToggleMain { flex: 1 1 auto; min-width: 0; }
@@ -47,7 +68,7 @@
             </style>
 
             <h2 class="epHead">Easy Plugin</h2>
-            <p class="epSub">Choose which plugin entries appear in the admin sidebar, and drag to reorder them. Changes are saved automatically.</p>
+            <p class="epSub">Choose which plugin entries appear in the admin sidebar and in what order. Use the arrow to open a plugin's settings inline. Active entries are pinned to the top of the sidebar. Changes are saved automatically.</p>
 
             <div class="epCard">
                 <div class="epToggleRow">
@@ -64,7 +85,7 @@
             </div>
 
             <div class="epCard">
-                <p class="epHint">Turn an entry off to hide it. Drag the handle to change the order (top = first).</p>
+                <p class="epHint">Toggle whether each plugin appears in the sidebar. Entries marked <span class="epExtra">extra</span> are not normally shown &mdash; turning them on adds them. Plugins with several settings pages are grouped (click the header to collapse). Drag the handle to reorder.</p>
                 <div id="epList"><div class="epEmpty">Loading&hellip;</div></div>
             </div>
 
@@ -75,52 +96,75 @@
                     var pluginId = "f4acffe0-0347-4b20-a69d-d50d6b2b4a7e";
                     var SELF = "EasyPlugin";
                     var page = document.querySelector('#EasyPluginConfigPage');
-                    var saveTimer = null;
-                    var statusTimer = null;
+                    var saveTimer = null, statusTimer = null;
 
                     function esc(s) {
                         return String(s == null ? '' : s)
                             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
                             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                     }
-
-                    // ConfigurationPages can come back PascalCase or camelCase depending on the build.
                     function pageName(p) { return p.Name != null ? p.Name : p.name; }
                     function pageDisplay(p) { return p.DisplayName || p.displayName || pageName(p); }
+                    function pageInMenu(p) {
+                        var v = (p.EnableInMainMenu != null) ? p.EnableInMainMenu : p.enableInMainMenu;
+                        return v === true;
+                    }
+                    function pagePlugin(p) {
+                        var id = (p.PluginId != null) ? p.PluginId : p.pluginId;
+                        return id ? String(id) : pageDisplay(p);   // group key: plugin id, else display name
+                    }
 
                     function getConfigPages() {
-                        return ApiClient.getJSON(ApiClient.getUrl('web/ConfigurationPages', { enableInMainMenu: true }))
-                            .catch(function () {
-                                return ApiClient.getJSON(ApiClient.getUrl('web/ConfigurationPages'))
-                                    .catch(function () { return []; });
-                            });
+                        return ApiClient.getJSON(ApiClient.getUrl('web/ConfigurationPages'))
+                            .catch(function () { return []; });
                     }
 
                     function setStatus(text) {
                         var el = page.querySelector('#epStatus');
-                        el.textContent = text;
-                        el.classList.add('show');
+                        el.textContent = text; el.classList.add('show');
                         if (statusTimer) { clearTimeout(statusTimer); }
                         statusTimer = setTimeout(function () { el.classList.remove('show'); }, 1500);
                     }
 
-                    function rowHtml(name, display, hidden) {
-                        var cls = 'epRow' + (hidden ? ' epHidden' : '');
-                        return '<div class="' + cls + '" draggable="true" data-name="' + esc(name) + '">' +
-                            '<span class="epGrip" title="Drag to reorder">⠿</span>' +
-                            '<div class="epRowMain">' +
-                                '<div class="epName">' + esc(display) + '</div>' +
-                                '<div class="epKey">' + esc(name) + '</div>' +
+                    function rowHtml(name, display, inMenu, shown) {
+                        var cls = 'epRow' + (shown ? '' : ' epHidden');
+                        var extra = inMenu ? '' : '<span class="epExtra">extra</span>';
+                        return '<div class="epRowWrap">' +
+                            '<div class="' + cls + '" draggable="true" data-name="' + esc(name) + '" data-inmenu="' + (inMenu ? '1' : '0') + '" data-display="' + esc(display) + '">' +
+                                '<span class="epGrip" title="Drag to reorder">&#10303;</span>' +
+                                '<button type="button" class="epArrow" title="Show settings">&#9654;</button>' +
+                                '<div class="epRowMain">' +
+                                    '<div class="epName">' + esc(display) + extra + '</div>' +
+                                    '<div class="epKey">' + esc(name) + '</div>' +
+                                '</div>' +
+                                '<label class="epSwitch" title="Show in sidebar">' +
+                                    '<input type="checkbox" class="epVis" ' + (shown ? 'checked' : '') + ' />' +
+                                    '<span class="epSlider"></span>' +
+                                '</label>' +
                             '</div>' +
-                            '<label class="epSwitch" title="Show in sidebar">' +
-                                '<input type="checkbox" class="epVis" ' + (hidden ? '' : 'checked') + ' />' +
-                                '<span class="epSlider"></span>' +
-                            '</label>' +
+                            '<div class="epEmbed"></div>' +
                         '</div>';
                     }
 
+                    function rowFor(p, hidden, added) {
+                        var n = pageName(p), inMenu = pageInMenu(p);
+                        var shown = inMenu ? (hidden.indexOf(n) < 0) : (added.indexOf(n) >= 0);
+                        return rowHtml(n, pageDisplay(p), inMenu, shown);
+                    }
+
                     function render(pages, cfg) {
+                        // /web/ConfigurationPages also lists plugin sub-resources (scripts, svg
+                        // flags, shaders, etc.). Keep only real config pages.
+                        pages = (pages || []).filter(function (p) {
+                            var n = pageName(p) || '';
+                            if (n === SELF) { return false; }
+                            if (n.indexOf('/') >= 0) { return false; }
+                            if (/\.[a-z0-9]{1,5}$/i.test(n)) { return false; }
+                            return true;
+                        });
+
                         var hidden = cfg.Hidden || [];
+                        var added = (cfg.Added || []).map(function (a) { return a.Name != null ? a.Name : a.name; });
                         var order = (cfg.Order && cfg.Order.length) ? cfg.Order : pages.map(pageName);
 
                         var sorted = pages.slice().sort(function (a, b) {
@@ -130,40 +174,90 @@
                         });
 
                         var list = page.querySelector('#epList');
-                        if (!sorted.length) {
-                            list.innerHTML = '<div class="epEmpty">No plugin pages found.</div>';
-                            return;
-                        }
-                        list.innerHTML = sorted.map(function (p) {
-                            var n = pageName(p);
-                            return rowHtml(n, pageDisplay(p), hidden.indexOf(n) >= 0);
+                        if (!sorted.length) { list.innerHTML = '<div class="epEmpty">No plugin pages found.</div>'; return; }
+
+                        // group by plugin; a plugin with >1 page becomes a collapsible group.
+                        var groups = [], byKey = {};
+                        sorted.forEach(function (p) {
+                            var key = pagePlugin(p);
+                            var g = byKey[key];
+                            if (!g) { g = { key: key, display: pageDisplay(p), pages: [] }; byKey[key] = g; groups.push(g); }
+                            g.pages.push(p);
+                        });
+
+                        list.innerHTML = groups.map(function (g) {
+                            if (g.pages.length === 1) { return rowFor(g.pages[0], hidden, added); }
+                            return '<div class="epGroup epCollapsed">' +
+                                '<div class="epGroupHead">' +
+                                    '<span class="epGroupCaret">&#9662;</span>' +
+                                    '<span class="epGroupName">' + esc(g.display) + '<span class="epGroupCount">' + g.pages.length + ' pages</span></span>' +
+                                '</div>' +
+                                '<div class="epGroupBody">' +
+                                    g.pages.map(function (p) { return rowFor(p, hidden, added); }).join('') +
+                                '</div>' +
+                            '</div>';
                         }).join('');
+
                         wireRows(list);
+                        wireGroups(list);
                     }
 
                     function wireRows(list) {
                         var dragged = null;
-                        list.querySelectorAll('.epRow').forEach(function (row) {
-                            row.addEventListener('dragstart', function () { dragged = row; row.classList.add('epDragging'); });
-                            row.addEventListener('dragend', function () {
-                                row.classList.remove('epDragging'); dragged = null; scheduleSave();
-                            });
+                        list.querySelectorAll('.epRowWrap').forEach(function (wrap) {
+                            var row = wrap.querySelector('.epRow');
+                            row.addEventListener('dragstart', function () { dragged = wrap; row.classList.add('epDragging'); });
+                            row.addEventListener('dragend', function () { row.classList.remove('epDragging'); dragged = null; scheduleSave(); });
                             row.addEventListener('dragover', function (e) {
                                 e.preventDefault();
-                                var target = e.target.closest('.epRow');
-                                if (!target || target === dragged || !dragged) { return; }
+                                var target = e.target.closest('.epRowWrap');
+                                if (!target || target === dragged || !dragged || target.parentElement !== dragged.parentElement) { return; }
                                 var rect = target.getBoundingClientRect();
                                 var after = (e.clientY - rect.top) > rect.height / 2;
-                                list.insertBefore(dragged, after ? target.nextSibling : target);
+                                target.parentElement.insertBefore(dragged, after ? target.nextSibling : target);
                             });
-                            var vis = row.querySelector('.epVis');
-                            if (vis) {
-                                vis.addEventListener('change', function (e) {
-                                    row.classList.toggle('epHidden', !e.target.checked);
-                                    scheduleSave();
-                                });
-                            }
+                            row.querySelector('.epVis').addEventListener('change', function (e) {
+                                row.classList.toggle('epHidden', !e.target.checked);
+                                scheduleSave();
+                            });
+                            row.querySelector('.epArrow').addEventListener('click', function () { toggleEmbed(wrap, row, row.querySelector('.epArrow')); });
                         });
+                    }
+
+                    function wireGroups(list) {
+                        list.querySelectorAll('.epGroup').forEach(function (g) {
+                            g.querySelector('.epGroupHead').addEventListener('click', function () { g.classList.toggle('epCollapsed'); });
+                        });
+                    }
+
+                    function toggleEmbed(wrap, row, arrow) {
+                        var embed = wrap.querySelector('.epEmbed');
+                        var open = embed.classList.toggle('epEmbedOpen');
+                        arrow.classList.toggle('epOpen', open);
+                        if (open && !embed.querySelector('iframe')) {
+                            var name = row.getAttribute('data-name');
+                            var f = document.createElement('iframe');
+                            f.setAttribute('loading', 'lazy');
+                            f.src = window.location.origin + '/web/index.html#/configurationpage?name=' + encodeURIComponent(name);
+                            f.addEventListener('load', function () {
+                                // Same-origin: strip Jellyfin's chrome (the left "TestFlix" nav, the
+                                // app bar, drawers) so only the plugin's settings show.
+                                try {
+                                    var d = f.contentDocument;
+                                    var st = d.createElement('style');
+                                    st.textContent =
+                                        '.skinHeader,.mainDrawer,header,.MuiAppBar-root,.MuiToolbar-root,' +
+                                        '.MuiDrawer-root,.MuiDrawer-docked,nav,[is="emby-drawer"],.headerTabs,' +
+                                        '.backgroundContainer,.dialogBackdrop,.adminDrawerLogo,.drawer{display:none!important;}' +
+                                        '.layout,.layout-rows,.dashboardDocument,.mainAnimatedPages,.skinBody,main,' +
+                                        '.pageContainer{margin:0!important;padding:0!important;inset:0!important;left:0!important;width:100%!important;}' +
+                                        '.content-primary,.page,.readOnlyContent,.dashboardContent{padding:1em!important;margin:0!important;max-width:none!important;}' +
+                                        'html,body{overflow:auto!important;background:#101010!important;}';
+                                    d.head.appendChild(st);
+                                } catch (e) { /* not ready / cross-origin */ }
+                            });
+                            embed.appendChild(f);
+                        }
                     }
 
                     function scheduleSave() {
@@ -178,12 +272,12 @@
                             cfg.Enabled = page.querySelector('#epEnabled').checked;
                             cfg.Order = rows.map(function (r) { return r.getAttribute('data-name'); });
                             cfg.Hidden = rows.filter(function (r) {
-                                var v = r.querySelector('.epVis');
-                                return v && !v.checked;
+                                return r.getAttribute('data-inmenu') === '1' && !r.querySelector('.epVis').checked;
                             }).map(function (r) { return r.getAttribute('data-name'); });
-                            ApiClient.updatePluginConfiguration(pluginId, cfg).then(function () {
-                                setStatus('Saved');
-                            });
+                            cfg.Added = rows.filter(function (r) {
+                                return r.getAttribute('data-inmenu') === '0' && r.querySelector('.epVis').checked;
+                            }).map(function (r) { return { Name: r.getAttribute('data-name'), DisplayName: r.getAttribute('data-display') }; });
+                            ApiClient.updatePluginConfiguration(pluginId, cfg).then(function () { setStatus('Saved'); });
                         });
                     }
 
@@ -195,12 +289,8 @@
                                 var cfg = res[1] || {};
                                 page.querySelector('#epEnabled').checked = cfg.Enabled !== false;
                                 var warn = page.querySelector('#epWarn');
-                                if (!pages.length) {
-                                    warn.style.display = '';
-                                    warn.textContent = 'Could not load the list of plugin pages from the server.';
-                                } else {
-                                    warn.style.display = 'none';
-                                }
+                                if (!pages.length) { warn.style.display = ''; warn.textContent = 'Could not load the list of plugin pages from the server.'; }
+                                else { warn.style.display = 'none'; }
                                 render(pages, cfg);
                                 Dashboard.hideLoadingMsg();
                             })

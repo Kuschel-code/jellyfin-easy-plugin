@@ -1,23 +1,23 @@
 (function () {
     'use strict';
 
-    // Easy Plugin client script.
+    // Easy Plugin client script (injected into index.html by a File Transformation provider).
     //
     // jellyfin-web 10.11 renders plugin configuration-page links in the dashboard drawer
-    // (component PluginDrawerSection) as React-managed MUI <a class="MuiListItemButton-root">
-    // elements under  ul[aria-labelledby="plugins-subheader"], with href
-    //   #/configurationpage?name=<encodeURIComponent(Name)>
+    // (PluginDrawerSection) as React-managed MUI <a class="MuiListItemButton-root"> elements
+    // under  ul[aria-labelledby="plugins-subheader"], href #/configurationpage?name=<enc(Name)>.
     //
-    // Because that list is React-rendered, moving nodes or setting inline display is undone on
-    // the next reconciliation. So we never touch the nodes: we inject a single <style> element
-    // and express hide (display:none) and order (flexbox order) purely as CSS keyed off the
-    // href. CSS wins over React's DOM and survives re-renders; we only re-inject the <style>
-    // if it ever gets removed.
+    // - HIDE + REORDER are done purely with an injected <style> keyed off the href, which wins
+    //   over React and survives re-renders.
+    // - ADD (force-show pages that aren't normally in the menu) requires inserting new <a> nodes.
+    //   React owns that list and removes foreign nodes on re-render, so we re-insert on every
+    //   mutation (debounced). New nodes are clones of a real entry, so they match MUI styling.
 
-    var cfg = { enabled: true, hidden: [], order: [] };
-    var SELF = 'EasyPlugin';                       // never hide our own page
+    var cfg = { enabled: true, hidden: [], order: [], added: [] };
+    var SELF = 'EasyPlugin';
     var STYLE_ID = 'easyPluginStyle';
     var LIST = 'ul[aria-labelledby="plugins-subheader"]';
+    var ADDED_ATTR = 'data-ep-added';
 
     function styleEl() {
         var el = document.getElementById(STYLE_ID);
@@ -29,31 +29,86 @@
         return el;
     }
 
-    // Selector for one plugin entry, matched on the href the drawer actually renders.
     function sel(name) {
         return LIST + ' a[href*="configurationpage?name=' + encodeURIComponent(name) + '"]';
     }
 
-    function build() {
+    function buildStyle() {
         var el = styleEl();
         if (!cfg || cfg.enabled === false) { el.textContent = ''; return; }
 
         var css = [
-            // Make the plugins list a flex column so the `order` property below takes effect.
             LIST + ' { display: flex; flex-direction: column; }',
-            // Keep the static "Plugins" entry (href #/dashboard/plugins) pinned to the top.
             LIST + ' a[href*="dashboard/plugins"] { order: 0; }'
         ];
-
         (cfg.hidden || []).forEach(function (n) {
             if (n && n !== SELF) { css.push(sel(n) + ' { display: none !important; }'); }
         });
-
         (cfg.order || []).forEach(function (n, i) {
             if (n) { css.push(sel(n) + ' { order: ' + (i + 1) + '; }'); }
         });
-
         el.textContent = css.join('\n');
+    }
+
+    function injectAdded() {
+        if (!cfg || cfg.enabled === false) { return; }
+        var added = cfg.added || [];
+        if (!added.length) { return; }
+
+        var list = document.querySelector(LIST);
+        if (!list) { return; }
+
+        // Prefer a real plugin-page entry as the clone template (gives the right icon + markup),
+        // else fall back to the static "Plugins" entry.
+        var template = list.querySelector('a[href*="configurationpage?name="]') || list.querySelector('a');
+        if (!template) { return; }
+
+        added.forEach(function (item) {
+            var name = item && item.name ? item.name : item;
+            if (!name) { return; }
+            var display = (item && item.display) ? item.display : name;
+            var href = '#/configurationpage?name=' + encodeURIComponent(name);
+
+            // Already there (a real entry with this name, or our previously-injected clone)?
+            if (list.querySelector('a[href*="configurationpage?name=' + encodeURIComponent(name) + '"]')) {
+                return;
+            }
+
+            var a = template.cloneNode(true);
+            a.setAttribute(ADDED_ATTR, name);
+            a.classList.remove('Mui-selected');
+            a.setAttribute('href', href);
+
+            var label = a.querySelector('.MuiListItemText-primary')
+                || a.querySelector('.MuiListItemText-root span')
+                || a.querySelector('.MuiListItemText-root');
+            if (label) { label.textContent = display; } else { a.textContent = display; }
+
+            list.appendChild(a);
+        });
+    }
+
+    // Pin the whole "Plugins" nav section to the top of the dashboard sidebar, so the active
+    // plugin entries appear first. The section lives among sibling sections; we flex the
+    // container and give the plugins list a negative order. Re-applied on each mutation.
+    function pinPluginsTop() {
+        if (!cfg || cfg.enabled === false) { return; }
+        var list = document.querySelector(LIST);
+        if (!list || !list.parentElement) { return; }
+        var container = list.parentElement;
+        var disp = '';
+        try { disp = window.getComputedStyle(container).display; } catch (e) { /* ignore */ }
+        if (disp.indexOf('flex') < 0) {
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+        }
+        list.style.order = '-1';
+    }
+
+    function apply() {
+        buildStyle();
+        injectAdded();
+        pinPluginsTop();
     }
 
     function loadConfig() {
@@ -64,12 +119,12 @@
     }
 
     loadConfig().then(function () {
-        build();
-        // The SPA almost never re-renders <head>, but guard against our <style> being dropped.
+        apply();
+        // React rebuilds the drawer; re-apply (re-inject added entries, re-ensure <style>) on change.
         var t = null;
         new MutationObserver(function () {
             clearTimeout(t);
-            t = setTimeout(function () { if (!document.getElementById(STYLE_ID)) { build(); } }, 200);
+            t = setTimeout(apply, 150);
         }).observe(document.documentElement, { childList: true, subtree: true });
     });
 })();
