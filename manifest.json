@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/Kuschel-code/jellyfin-easy-plugin/main/logo.svg",
     "versions": [
       {
+        "version": "0.0.2.0",
+        "changelog": "Pin the plugins section just below the server logo (never above it). One row per plugin on the config page (multi-page plugins are no longer grouped). Plugins that aren't normally in the sidebar moved into a collapsible \"Add another plugin\" section, so the main list shows only the active entries. Disabling now fully restores the original sidebar.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Kuschel-code/jellyfin-easy-plugin/releases/download/v0.0.2/easy-plugin_0.0.2.zip",
+        "checksum": "808daddecf5ad00e5a82f1b4776452a0",
+        "timestamp": "2026-06-25T15:53:37Z"
+      },
+      {
         "version": "0.0.1.0",
         "changelog": "First release. Hide, reorder and force-add plugin entries in the admin sidebar; collapsible groups for multi-page plugins; inline plugin settings via iframe. Injects via File Transformation (auto-installs it, or uses Custom Theme's bundled provider).",
         "targetAbi": "10.11.0.0",
