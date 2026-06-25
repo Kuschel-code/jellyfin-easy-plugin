@@ -13,7 +13,7 @@
         "changelog": "First release. Hide, reorder and force-add plugin entries in the admin sidebar; collapsible groups for multi-page plugins; inline plugin settings via iframe. Injects via File Transformation (auto-installs it, or uses Custom Theme's bundled provider).",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/Kuschel-code/jellyfin-easy-plugin/releases/download/v0.0.1/easy-plugin_0.0.1.zip",
-        "checksum": "e8f4b008039e79dbc541216d5d562d59",
+        "checksum": "4b455fc6670e1f9a8eefb29b98af5439",
         "timestamp": "2026-06-24T23:45:00Z"
       }
     ]
