@@ -6,7 +6,7 @@
     "overview": "Tidy the admin sidebar: hide, reorder and add plugin entries.",
     "owner": "Kuschel-code",
     "category": "General",
-    "imageUrl": "",
+    "imageUrl": "https://raw.githubusercontent.com/Kuschel-code/jellyfin-easy-plugin/main/logo.svg",
     "versions": [
       {
         "version": "0.0.1.0",
