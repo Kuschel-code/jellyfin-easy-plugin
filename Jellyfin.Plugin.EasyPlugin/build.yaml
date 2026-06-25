@@ -1,7 +1,7 @@
 ---
 name: "Easy Plugin"
 guid: "f4acffe0-0347-4b20-a69d-d50d6b2b4a7e"
-version: "0.0.1.0"
+version: "0.0.2.0"
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 owner: "Kuschel-code"
@@ -15,5 +15,8 @@ category: "General"
 artifacts:
   - "Jellyfin.Plugin.EasyPlugin.dll"
 changelog: >
-  0.0.1.0 - First release. Hide and drag-reorder sidebar plugin entries from the
-  configuration page; client script injected via File Transformation (callback mode).
+  0.0.2.0 - Pin the plugins section just below the server logo (never above it).
+  One row per plugin on the config page (multi-page plugins are no longer grouped).
+  Plugins that aren't normally in the sidebar moved into a collapsible "Add another
+  plugin" section, so the main list shows only the active sidebar entries. Disabling
+  now fully restores the original sidebar.

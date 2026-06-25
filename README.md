@@ -8,12 +8,16 @@ one auto-saving page.
 
 - **Hide / show** any plugin entry in the admin sidebar.
 - **Reorder** entries by drag-and-drop.
-- **Add** plugins that don't normally appear in the sidebar (e.g. metadata providers) — force them in.
-- **Collapsible groups** for plugins that register several settings pages.
+- **One row per plugin** — a plugin that registers several settings pages (e.g. AI Upscaler)
+  collapses to a single entry instead of cluttering the list.
+- **Add another plugin** — plugins that don't normally appear in the sidebar (e.g. metadata
+  providers) live in a collapsible section; toggle one on to force it in. The main list therefore
+  shows only the plugins that are actually in your sidebar.
 - **Inline settings**: an arrow on each row opens that plugin's own settings in place (a same-origin
   iframe with Jellyfin's header and left nav hidden).
-- **Active entries pinned to the top** of the dashboard sidebar.
-- **Auto-save** — changes apply immediately, no Save button.
+- **Plugins pinned to the top** of the dashboard sidebar — just below the server logo, never above it.
+- **Auto-save** — changes apply immediately, no Save button. Turning the plugin off restores the
+  original sidebar untouched.
 
 ## How it works
 
@@ -68,8 +72,8 @@ time (an inline MSBuild task strips comments and whitespace) to keep the plugin 
 ## Release
 
 ```bash
-git tag v0.0.1
-git push origin v0.0.1
+git tag v0.0.2
+git push origin v0.0.2
 ```
 
 The Release workflow builds the DLL, packages it with `meta.json` into a zip and prints the MD5; put

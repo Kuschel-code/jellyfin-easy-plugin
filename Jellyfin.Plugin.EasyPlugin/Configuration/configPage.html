@@ -85,7 +85,7 @@
             </div>
 
             <div class="epCard">
-                <p class="epHint">Toggle whether each plugin appears in the sidebar. Entries marked <span class="epExtra">extra</span> are not normally shown &mdash; turning them on adds them. Plugins with several settings pages are grouped (click the header to collapse). Drag the handle to reorder.</p>
+                <p class="epHint">Toggle whether each plugin appears in the sidebar, and drag the handle to reorder. Use the arrow to open a plugin's settings inline. Plugins that aren't normally in the sidebar are under <em>Add another plugin</em> &mdash; turning one on adds it (marked <span class="epExtra">extra</span>).</p>
                 <div id="epList"><div class="epEmpty">Loading&hellip;</div></div>
             </div>
 
@@ -176,28 +176,44 @@
                         var list = page.querySelector('#epList');
                         if (!sorted.length) { list.innerHTML = '<div class="epEmpty">No plugin pages found.</div>'; return; }
 
-                        // group by plugin; a plugin with >1 page becomes a collapsible group.
-                        var groups = [], byKey = {};
+                        // ONE row per plugin: collapse a plugin's multiple config pages into a single
+                        // representative entry (prefer the page that appears in the sidebar, i.e.
+                        // EnableInMainMenu; otherwise the first). No groups — they added no value.
+                        var byKey = {}, repr = [];
                         sorted.forEach(function (p) {
                             var key = pagePlugin(p);
-                            var g = byKey[key];
-                            if (!g) { g = { key: key, display: pageDisplay(p), pages: [] }; byKey[key] = g; groups.push(g); }
-                            g.pages.push(p);
+                            if (!byKey[key]) { byKey[key] = p; repr.push(p); }
+                            else if (pageInMenu(p) && !pageInMenu(byKey[key])) {
+                                var idx = repr.indexOf(byKey[key]);
+                                if (idx >= 0) { repr[idx] = p; }
+                                byKey[key] = p;
+                            }
                         });
 
-                        list.innerHTML = groups.map(function (g) {
-                            if (g.pages.length === 1) { return rowFor(g.pages[0], hidden, added); }
-                            return '<div class="epGroup epCollapsed">' +
+                        // Split into the plugins that actually belong in the sidebar (menu pages,
+                        // plus any "extra" pages the user has force-added) and the rest, which are
+                        // offered under a collapsed "Add another plugin" section. This keeps the
+                        // main list to just the selected/relevant sidebar plugins.
+                        var primary = [], extra = [];
+                        repr.forEach(function (p) {
+                            var n = pageName(p);
+                            if (pageInMenu(p) || added.indexOf(n) >= 0) { primary.push(p); }
+                            else { extra.push(p); }
+                        });
+
+                        var html = primary.map(function (p) { return rowFor(p, hidden, added); }).join('');
+                        if (extra.length) {
+                            html += '<div class="epGroup epCollapsed epAddGroup">' +
                                 '<div class="epGroupHead">' +
                                     '<span class="epGroupCaret">&#9662;</span>' +
-                                    '<span class="epGroupName">' + esc(g.display) + '<span class="epGroupCount">' + g.pages.length + ' pages</span></span>' +
+                                    '<span class="epGroupName">Add another plugin<span class="epGroupCount">' + extra.length + ' available</span></span>' +
                                 '</div>' +
                                 '<div class="epGroupBody">' +
-                                    g.pages.map(function (p) { return rowFor(p, hidden, added); }).join('') +
+                                    extra.map(function (p) { return rowFor(p, hidden, added); }).join('') +
                                 '</div>' +
                             '</div>';
-                        }).join('');
-
+                        }
+                        list.innerHTML = html;
                         wireRows(list);
                         wireGroups(list);
                     }

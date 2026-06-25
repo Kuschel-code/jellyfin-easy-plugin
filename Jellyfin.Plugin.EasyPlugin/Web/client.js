@@ -88,25 +88,51 @@
         });
     }
 
+    // Remove the entries we previously cloned in (used when disabling, so the sidebar reverts).
+    function removeAdded() {
+        var nodes = document.querySelectorAll('[' + ADDED_ATTR + ']');
+        Array.prototype.forEach.call(nodes, function (n) { n.remove(); });
+    }
+
     // Pin the whole "Plugins" nav section to the top of the dashboard sidebar, so the active
     // plugin entries appear first. The section lives among sibling sections; we flex the
     // container and give the plugins list a negative order. Re-applied on each mutation.
+    // When disabled, undo every inline style we set so the sidebar is left untouched.
     function pinPluginsTop() {
-        if (!cfg || cfg.enabled === false) { return; }
         var list = document.querySelector(LIST);
         if (!list || !list.parentElement) { return; }
         var container = list.parentElement;
+
+        if (!cfg || cfg.enabled === false) {
+            list.style.order = '';
+            container.style.display = '';
+            container.style.flexDirection = '';
+            var prev = container.querySelector(':scope > [data-ep-pinned]');
+            if (prev) { prev.style.order = ''; prev.removeAttribute('data-ep-pinned'); }
+            return;
+        }
+
         var disp = '';
         try { disp = window.getComputedStyle(container).display; } catch (e) { /* ignore */ }
         if (disp.indexOf('flex') < 0) {
             container.style.display = 'flex';
             container.style.flexDirection = 'column';
         }
+        // Keep the server logo / home entry (href "#/") on top, then pin the plugins section
+        // just below it (above the other nav sections) — never above the logo.
+        var logo = null;
+        for (var i = 0; i < container.children.length; i++) {
+            var a = container.children[i].querySelector && container.children[i].querySelector('a');
+            if (a && a.getAttribute('href') === '#/') { logo = container.children[i]; break; }
+        }
+        if (!logo) { logo = container.firstElementChild; }
+        if (logo && logo !== list) { logo.style.order = '-2'; logo.setAttribute('data-ep-pinned', '1'); }
         list.style.order = '-1';
     }
 
     function apply() {
         buildStyle();
+        if (!cfg || cfg.enabled === false) { removeAdded(); pinPluginsTop(); return; }
         injectAdded();
         pinPluginsTop();
     }
