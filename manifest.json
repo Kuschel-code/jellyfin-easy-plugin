@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/Kuschel-code/jellyfin-easy-plugin/main/logo.svg",
     "versions": [
       {
+        "version": "0.0.3.0",
+        "changelog": "Changes now apply to the sidebar instantly with no page reload: toggling a plugin on/off, adding/removing an extra, reordering and the master enable switch all reflect live. Removing a previously-added plugin now also removes its sidebar entry live.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Kuschel-code/jellyfin-easy-plugin/releases/download/v0.0.3/easy-plugin_0.0.3.zip",
+        "checksum": "b9ba601d504f6bacde7e6824c6c9d473",
+        "timestamp": "2026-06-25T16:59:33Z"
+      },
+      {
         "version": "0.0.2.0",
         "changelog": "Pin the plugins section just below the server logo (never above it). One row per plugin on the config page (multi-page plugins are no longer grouped). Plugins that aren't normally in the sidebar moved into a collapsible \"Add another plugin\" section, so the main list shows only the active entries. Disabling now fully restores the original sidebar.",
         "targetAbi": "10.11.0.0",
