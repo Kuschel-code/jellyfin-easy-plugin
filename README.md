@@ -15,9 +15,10 @@ one auto-saving page.
   shows only the plugins that are actually in your sidebar.
 - **Inline settings**: an arrow on each row opens that plugin's own settings in place (a same-origin
   iframe with Jellyfin's header and left nav hidden).
-- **Plugins pinned to the top** of the dashboard sidebar — just below the server logo, never above it.
+- **Live updates** — every change (show/hide, add/remove, reorder, the master switch) applies to
+  the sidebar immediately, with no page reload.
 - **Auto-save** — changes apply immediately, no Save button. Turning the plugin off restores the
-  original sidebar untouched.
+  original sidebar untouched. The Plugins section keeps its normal place in the sidebar.
 
 ## How it works
 

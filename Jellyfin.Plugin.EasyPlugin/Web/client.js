@@ -110,47 +110,27 @@
         injectAdded();
     }
 
-    // Pin the whole "Plugins" nav section to the top of the dashboard sidebar, so the active
-    // plugin entries appear first. The section lives among sibling sections; we flex the
-    // container and give the plugins list a negative order. Re-applied on each mutation.
-    // When disabled, undo every inline style we set so the sidebar is left untouched.
-    function pinPluginsTop() {
+    // Earlier versions pinned the whole "Plugins" nav section to the top of the sidebar. Users
+    // want it left in its normal place, so we no longer pin — and we actively clear any pin styles
+    // a previous version set, so upgrading reverts the section to where Jellyfin puts it. (Hiding
+    // and within-section reordering still work via the injected <style>, which only flexes the
+    // plugins list itself, not its position among the sibling nav sections.)
+    function unpinSection() {
         var list = document.querySelector(LIST);
         if (!list || !list.parentElement) { return; }
         var container = list.parentElement;
-
-        if (!cfg || cfg.enabled === false) {
-            list.style.order = '';
-            container.style.display = '';
-            container.style.flexDirection = '';
-            var prev = container.querySelector(':scope > [data-ep-pinned]');
-            if (prev) { prev.style.order = ''; prev.removeAttribute('data-ep-pinned'); }
-            return;
-        }
-
-        var disp = '';
-        try { disp = window.getComputedStyle(container).display; } catch (e) { /* ignore */ }
-        if (disp.indexOf('flex') < 0) {
-            container.style.display = 'flex';
-            container.style.flexDirection = 'column';
-        }
-        // Keep the server logo / home entry (href "#/") on top, then pin the plugins section
-        // just below it (above the other nav sections) — never above the logo.
-        var logo = null;
-        for (var i = 0; i < container.children.length; i++) {
-            var a = container.children[i].querySelector && container.children[i].querySelector('a');
-            if (a && a.getAttribute('href') === '#/') { logo = container.children[i]; break; }
-        }
-        if (!logo) { logo = container.firstElementChild; }
-        if (logo && logo !== list) { logo.style.order = '-2'; logo.setAttribute('data-ep-pinned', '1'); }
-        list.style.order = '-1';
+        if (list.style.order) { list.style.order = ''; }
+        if (container.style.display) { container.style.display = ''; }
+        if (container.style.flexDirection) { container.style.flexDirection = ''; }
+        var prev = container.querySelector(':scope > [data-ep-pinned]');
+        if (prev) { prev.style.order = ''; prev.removeAttribute('data-ep-pinned'); }
     }
 
     function apply() {
         buildStyle();
-        if (!cfg || cfg.enabled === false) { removeAdded(); pinPluginsTop(); return; }
+        unpinSection();
+        if (!cfg || cfg.enabled === false) { removeAdded(); return; }
         syncAdded();
-        pinPluginsTop();
     }
 
     function loadConfig() {

@@ -15,8 +15,6 @@ category: "General"
 artifacts:
   - "Jellyfin.Plugin.EasyPlugin.dll"
 changelog: >
-  0.0.3.0 - Changes now apply to the sidebar instantly, with no page reload: toggling
-  a plugin on/off, adding/removing an "extra", reordering and the master enable switch
-  all reflect live (the config page signals the injected script, which re-fetches and
-  re-applies). Removing a previously-added plugin now also removes its sidebar entry
-  live. Builds on 0.0.2.0 (pin below logo, one row per plugin, "Add another plugin").
+  0.0.4.0 - The Plugins section is no longer pinned to the top of the sidebar; it
+  keeps its normal Jellyfin position. Upgrading clears the old pin automatically.
+  Hiding, reordering within the section and live updates are unchanged.
