@@ -23,9 +23,46 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
+  <!--
+    The embedded web resources are minified at build time (comments + leading whitespace + blank
+    lines stripped) and embedded under their original logical names. This keeps the source files
+    readable while shrinking the DLL — important because one target server's storage corrupts this
+    plugin's DLL on write at file offset 0xB000, so the DLL must stay below ~44 KB.
+  -->
+  <UsingTask TaskName="EpMinify" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Source ParameterType="System.String" Required="true" />
+      <Dest ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        var sb = new System.Text.StringBuilder();
+        foreach (var raw in System.IO.File.ReadAllLines(Source))
+        {
+            var t = raw.Trim();
+            if (t.Length == 0) continue;
+            if (t.StartsWith("//")) continue;
+            if (t.StartsWith("<!--") && t.EndsWith("-->")) continue;
+            if (t.StartsWith("/*") && t.EndsWith("*/")) continue;
+            sb.Append(t);
+            sb.Append('\n');
+        }
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Dest));
+        System.IO.File.WriteAllText(Dest, sb.ToString());
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <!-- Generate the minified copies early, before the SDK gathers/embeds resources. -->
+  <Target Name="EpMinifyEmbeds" BeforeTargets="AssignTargetPaths;BeforeCompile" Inputs="Web/client.js;Configuration/configPage.html" Outputs="$(IntermediateOutputPath)ep/client.js;$(IntermediateOutputPath)ep/configPage.html">
+    <EpMinify Source="Web/client.js" Dest="$(IntermediateOutputPath)ep/client.js" />
+    <EpMinify Source="Configuration/configPage.html" Dest="$(IntermediateOutputPath)ep/configPage.html" />
+  </Target>
+
+  <!-- Embed the minified copies under the original logical names (declared statically so the SDK picks them up). -->
   <ItemGroup>
-    <EmbeddedResource Include="Configuration\configPage.html" />
-    <EmbeddedResource Include="Web\client.js" />
+    <EmbeddedResource Include="$(IntermediateOutputPath)ep/client.js" LogicalName="Jellyfin.Plugin.EasyPlugin.Web.client.js" />
+    <EmbeddedResource Include="$(IntermediateOutputPath)ep/configPage.html" LogicalName="Jellyfin.Plugin.EasyPlugin.Configuration.configPage.html" />
   </ItemGroup>
 
 </Project>
