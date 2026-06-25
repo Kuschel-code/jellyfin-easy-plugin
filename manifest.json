@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/Kuschel-code/jellyfin-easy-plugin/main/logo.svg",
     "versions": [
       {
+        "version": "0.0.4.0",
+        "changelog": "The Plugins section is no longer pinned to the top of the sidebar; it keeps its normal Jellyfin position. Upgrading clears the old pin automatically. Hiding, reordering within the section and live updates are unchanged.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Kuschel-code/jellyfin-easy-plugin/releases/download/v0.0.4/easy-plugin_0.0.4.zip",
+        "checksum": "8024286d4246264e1df54b71190f82d2",
+        "timestamp": "2026-06-25T17:44:17Z"
+      },
+      {
         "version": "0.0.3.0",
         "changelog": "Changes now apply to the sidebar instantly with no page reload: toggling a plugin on/off, adding/removing an extra, reordering and the master enable switch all reflect live. Removing a previously-added plugin now also removes its sidebar entry live.",
         "targetAbi": "10.11.0.0",
