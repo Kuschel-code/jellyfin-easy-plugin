@@ -1,7 +1,7 @@
 ---
 name: "Easy Plugin"
 guid: "f4acffe0-0347-4b20-a69d-d50d6b2b4a7e"
-version: "0.0.2.0"
+version: "0.0.3.0"
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 owner: "Kuschel-code"
@@ -15,8 +15,8 @@ category: "General"
 artifacts:
   - "Jellyfin.Plugin.EasyPlugin.dll"
 changelog: >
-  0.0.2.0 - Pin the plugins section just below the server logo (never above it).
-  One row per plugin on the config page (multi-page plugins are no longer grouped).
-  Plugins that aren't normally in the sidebar moved into a collapsible "Add another
-  plugin" section, so the main list shows only the active sidebar entries. Disabling
-  now fully restores the original sidebar.
+  0.0.3.0 - Changes now apply to the sidebar instantly, with no page reload: toggling
+  a plugin on/off, adding/removing an "extra", reordering and the master enable switch
+  all reflect live (the config page signals the injected script, which re-fetches and
+  re-applies). Removing a previously-added plugin now also removes its sidebar entry
+  live. Builds on 0.0.2.0 (pin below logo, one row per plugin, "Add another plugin").

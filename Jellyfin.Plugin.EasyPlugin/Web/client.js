@@ -94,6 +94,22 @@
         Array.prototype.forEach.call(nodes, function (n) { n.remove(); });
     }
 
+    // Reconcile cloned entries with cfg.added: drop clones whose name is no longer wanted, then add
+    // the rest. injectAdded() only adds, so without this an un-added plugin would leave its clone
+    // behind. Match strictly on the data-ep-added attribute value vs cfg.added[].name (never href).
+    function syncAdded() {
+        var wanted = {};
+        (cfg.added || []).forEach(function (it) {
+            var n = (it && it.name) ? it.name : it;
+            if (n) { wanted[n] = true; }
+        });
+        var nodes = document.querySelectorAll('[' + ADDED_ATTR + ']');
+        Array.prototype.forEach.call(nodes, function (n) {
+            if (!wanted[n.getAttribute(ADDED_ATTR)]) { n.remove(); }
+        });
+        injectAdded();
+    }
+
     // Pin the whole "Plugins" nav section to the top of the dashboard sidebar, so the active
     // plugin entries appear first. The section lives among sibling sections; we flex the
     // container and give the plugins list a negative order. Re-applied on each mutation.
@@ -133,7 +149,7 @@
     function apply() {
         buildStyle();
         if (!cfg || cfg.enabled === false) { removeAdded(); pinPluginsTop(); return; }
-        injectAdded();
+        syncAdded();
         pinPluginsTop();
     }
 
@@ -143,6 +159,16 @@
             .then(function (c) { if (c) { cfg = c; } })
             .catch(function () { /* keep defaults */ });
     }
+
+    // Re-fetch the config and re-apply. The admin config page dispatches "easyplugin-config-changed"
+    // right after it auto-saves, so hide/show/add/un-add/reorder/enable reflect in the sidebar with
+    // no page reload. Registered synchronously (before the first fetch) so an early save is never
+    // missed; also exposed as a global for a direct call. visibilitychange picks up edits made in
+    // another tab/device when this tab is focused again.
+    function refresh() { return loadConfig().then(apply); }
+    window.EasyPluginRefresh = refresh;
+    window.addEventListener('easyplugin-config-changed', function () { refresh(); });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) { refresh(); } });
 
     loadConfig().then(function () {
         apply();

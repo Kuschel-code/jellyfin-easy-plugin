@@ -293,7 +293,12 @@
                             cfg.Added = rows.filter(function (r) {
                                 return r.getAttribute('data-inmenu') === '0' && r.querySelector('.epVis').checked;
                             }).map(function (r) { return { Name: r.getAttribute('data-name'), DisplayName: r.getAttribute('data-display') }; });
-                            ApiClient.updatePluginConfiguration(pluginId, cfg).then(function () { setStatus('Saved'); });
+                            ApiClient.updatePluginConfiguration(pluginId, cfg).then(function () {
+                                setStatus('Saved');
+                                // Tell the injected sidebar script (same window) to re-fetch + re-apply
+                                // now, so the change shows in the sidebar without a page reload.
+                                try { window.dispatchEvent(new CustomEvent('easyplugin-config-changed')); } catch (e) { /* ignore */ }
+                            });
                         });
                     }
 
