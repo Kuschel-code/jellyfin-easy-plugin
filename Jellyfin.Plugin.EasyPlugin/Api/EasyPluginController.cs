@@ -44,7 +44,8 @@ public class EasyPluginController : ControllerBase
             enabled = c.Enabled,
             hidden = c.Hidden,
             order = c.Order,
-            added = c.Added.Select(a => new { name = a.Name, display = a.DisplayName })
+            added = c.Added.Select(a => new { name = a.Name, display = a.DisplayName }),
+            groups = c.Groups.Select(g => new { id = g.Id, name = g.Name, members = g.Members })
         });
     }
 }

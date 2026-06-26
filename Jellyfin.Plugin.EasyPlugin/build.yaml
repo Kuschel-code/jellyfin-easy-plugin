@@ -1,7 +1,7 @@
 ---
 name: "Easy Plugin"
 guid: "f4acffe0-0347-4b20-a69d-d50d6b2b4a7e"
-version: "0.0.3.0"
+version: "0.0.5.0"
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 owner: "Kuschel-code"
@@ -15,6 +15,7 @@ category: "General"
 artifacts:
   - "Jellyfin.Plugin.EasyPlugin.dll"
 changelog: >
-  0.0.4.0 - The Plugins section is no longer pinned to the top of the sidebar; it
-  keeps its normal Jellyfin position. Upgrading clears the old pin automatically.
-  Hiding, reordering within the section and live updates are unchanged.
+  0.0.5.0 - Sidebar groups: create named, collapsible groups and drag plugins into
+  them in the config page; each group shows in the sidebar as a header with its
+  plugins nested underneath (collapse state remembered per browser). Also removed
+  the black bar on the left of the inline settings view.

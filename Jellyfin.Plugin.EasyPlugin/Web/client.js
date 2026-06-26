@@ -13,11 +13,23 @@
     //   React owns that list and removes foreign nodes on re-render, so we re-insert on every
     //   mutation (debounced). New nodes are clones of a real entry, so they match MUI styling.
 
-    var cfg = { enabled: true, hidden: [], order: [], added: [] };
+    var cfg = { enabled: true, hidden: [], order: [], added: [], groups: [] };
     var SELF = 'EasyPlugin';
     var STYLE_ID = 'easyPluginStyle';
     var LIST = 'ul[aria-labelledby="plugins-subheader"]';
     var ADDED_ATTR = 'data-ep-added';
+    var GROUP_ATTR = 'data-ep-group';
+    var COLLAPSE_KEY = 'ep-group-collapsed:';
+
+    function isCollapsed(id) {
+        try { return localStorage.getItem(COLLAPSE_KEY + id) === '1'; } catch (e) { return false; }
+    }
+    function setCollapsed(id, v) {
+        try { localStorage.setItem(COLLAPSE_KEY + id, v ? '1' : '0'); } catch (e) { /* ignore */ }
+    }
+    function escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
 
     function styleEl() {
         var el = document.getElementById(STYLE_ID);
@@ -44,9 +56,32 @@
         (cfg.hidden || []).forEach(function (n) {
             if (n && n !== SELF) { css.push(sel(n) + ' { display: none !important; }'); }
         });
-        (cfg.order || []).forEach(function (n, i) {
-            if (n) { css.push(sel(n) + ' { order: ' + (i + 1) + '; }'); }
+
+        // Plugins assigned to a group are ordered under their group header; the rest ("ungrouped")
+        // keep their cfg.order sequence ABOVE all groups.
+        var groups = cfg.groups || [];
+        var grouped = {};
+        groups.forEach(function (g) { (g && g.members || []).forEach(function (m) { if (m) { grouped[m] = true; } }); });
+
+        var o = 1;
+        (cfg.order || []).forEach(function (n) {
+            if (n && !grouped[n]) { css.push(sel(n) + ' { order: ' + (o++) + '; }'); }
         });
+
+        // Each group: a header (order = base) then its indented members; collapsed groups (a per-
+        // browser localStorage preference) hide their members. Big gaps keep groups well separated.
+        groups.forEach(function (g, gi) {
+            if (!g || !g.id || !g.members || !g.members.length) { return; }
+            var base = 1000 + gi * 1000;
+            var collapsed = isCollapsed(g.id);
+            css.push(LIST + ' [' + GROUP_ATTR + '="' + g.id + '"] { order: ' + base + '; }');
+            g.members.forEach(function (m, mi) {
+                if (!m) { return; }
+                css.push(sel(m) + ' { order: ' + (base + 1 + mi) + '; padding-left: 2.2em !important; }');
+                if (collapsed) { css.push(sel(m) + ' { display: none !important; }'); }
+            });
+        });
+
         el.textContent = css.join('\n');
     }
 
@@ -110,6 +145,50 @@
         injectAdded();
     }
 
+    // Inject a collapsible header row for each non-empty group (positioned by the injected <style>
+    // order rules). Re-applied on every mutation, like the added clones. The header carries
+    // data-ep-group=<id>; clicking it toggles the per-browser collapse state and re-applies.
+    function syncGroups() {
+        var list = document.querySelector(LIST);
+        if (!list) { return; }
+        var groups = (cfg.groups || []).filter(function (g) { return g && g.id && g.members && g.members.length; });
+        var wanted = {};
+        groups.forEach(function (g) { wanted[g.id] = true; });
+
+        Array.prototype.forEach.call(list.querySelectorAll('[' + GROUP_ATTR + ']'), function (h) {
+            if (!wanted[h.getAttribute(GROUP_ATTR)]) { h.remove(); }
+        });
+
+        groups.forEach(function (g) {
+            var h = list.querySelector('[' + GROUP_ATTR + '="' + g.id + '"]');
+            if (!h) {
+                h = document.createElement('div');
+                h.setAttribute(GROUP_ATTR, g.id);
+                h.className = 'MuiListSubheader-root MuiListSubheader-gutters';
+                h.style.cssText = 'display:flex; align-items:center; gap:.35em; cursor:pointer; user-select:none;';
+                h.addEventListener('click', function () {
+                    var id = h.getAttribute(GROUP_ATTR);
+                    setCollapsed(id, !isCollapsed(id));
+                    apply();
+                });
+                list.appendChild(h);
+            }
+            // Only rewrite the header content when its rendered state actually changed, so we don't
+            // feed the MutationObserver an endless stream of (identical) DOM edits.
+            var collapsed = isCollapsed(g.id);
+            var stateKey = (collapsed ? 'c' : 'o') + '|' + (g.name || '');
+            if (h.getAttribute('data-ep-state') !== stateKey) {
+                h.setAttribute('data-ep-state', stateKey);
+                h.innerHTML = '<span style="display:inline-block;transition:transform .15s;opacity:.7;transform:rotate(' +
+                    (collapsed ? '-90deg' : '0deg') + ');">&#9662;</span><span>' + escapeHtml(g.name || 'Group') + '</span>';
+            }
+        });
+    }
+
+    function removeGroups() {
+        Array.prototype.forEach.call(document.querySelectorAll('[' + GROUP_ATTR + ']'), function (h) { h.remove(); });
+    }
+
     // Earlier versions pinned the whole "Plugins" nav section to the top of the sidebar. Users
     // want it left in its normal place, so we no longer pin — and we actively clear any pin styles
     // a previous version set, so upgrading reverts the section to where Jellyfin puts it. (Hiding
@@ -129,8 +208,9 @@
     function apply() {
         buildStyle();
         unpinSection();
-        if (!cfg || cfg.enabled === false) { removeAdded(); return; }
+        if (!cfg || cfg.enabled === false) { removeAdded(); removeGroups(); return; }
         syncAdded();
+        syncGroups();
     }
 
     function loadConfig() {
