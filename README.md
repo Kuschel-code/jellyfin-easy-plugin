@@ -8,6 +8,9 @@ one auto-saving page.
 
 - **Hide / show** any plugin entry in the admin sidebar.
 - **Reorder** entries by drag-and-drop.
+- **Groups** — create named, collapsible groups and drag plugins into them in the config page; in
+  the sidebar each group becomes a header with its plugins nested underneath. Collapse state is
+  remembered per browser. Ungrouped plugins stay above the groups.
 - **One row per plugin** — a plugin that registers several settings pages (e.g. AI Upscaler)
   collapses to a single entry instead of cluttering the list.
 - **Add another plugin** — plugins that don't normally appear in the sidebar (e.g. metadata
@@ -73,8 +76,8 @@ time (an inline MSBuild task strips comments and whitespace) to keep the plugin 
 ## Release
 
 ```bash
-git tag v0.0.2
-git push origin v0.0.2
+git tag v0.0.5
+git push origin v0.0.5
 ```
 
 The Release workflow builds the DLL, packages it with `meta.json` into a zip and prints the MD5; put
