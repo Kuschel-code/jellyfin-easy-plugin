@@ -57,29 +57,45 @@
             if (n && n !== SELF) { css.push(sel(n) + ' { display: none !important; }'); }
         });
 
-        // Plugins assigned to a group are ordered under their group header; the rest ("ungrouped")
-        // keep their cfg.order sequence ABOVE all groups.
+        // cfg.order is a single top-to-bottom sequence: plugin names for ungrouped entries, plus
+        // "group:<id>" tokens marking where a whole group sits. A group emits its header followed
+        // by its indented members; collapsed groups (a per-browser localStorage preference) hide
+        // their members. Groups without a token (configs saved by older versions) come after
+        // everything placed by cfg.order, in cfg.groups array order — the old behavior.
         var groups = cfg.groups || [];
+        var byId = {};
         var grouped = {};
-        groups.forEach(function (g) { (g && g.members || []).forEach(function (m) { if (m) { grouped[m] = true; } }); });
-
-        var o = 1;
-        (cfg.order || []).forEach(function (n) {
-            if (n && !grouped[n]) { css.push(sel(n) + ' { order: ' + (o++) + '; }'); }
+        groups.forEach(function (g) {
+            if (!g || !g.id) { return; }
+            byId[g.id] = g;
+            (g.members || []).forEach(function (m) { if (m) { grouped[m] = true; } });
         });
 
-        // Each group: a header (order = base) then its indented members; collapsed groups (a per-
-        // browser localStorage preference) hide their members. Big gaps keep groups well separated.
-        groups.forEach(function (g, gi) {
-            if (!g || !g.id || !g.members || !g.members.length) { return; }
-            var base = 1000 + gi * 1000;
+        var o = 1;
+        var placed = {};
+        function emitGroup(g) {
+            if (!g.members || !g.members.length) { return; }
             var collapsed = isCollapsed(g.id);
-            css.push(LIST + ' [' + GROUP_ATTR + '="' + g.id + '"] { order: ' + base + '; }');
-            g.members.forEach(function (m, mi) {
+            css.push(LIST + ' [' + GROUP_ATTR + '="' + g.id + '"] { order: ' + (o++) + '; }');
+            g.members.forEach(function (m) {
                 if (!m) { return; }
-                css.push(sel(m) + ' { order: ' + (base + 1 + mi) + '; padding-left: 2.2em !important; }');
+                css.push(sel(m) + ' { order: ' + (o++) + '; padding-left: 2.2em !important; }');
                 if (collapsed) { css.push(sel(m) + ' { display: none !important; }'); }
             });
+        }
+
+        (cfg.order || []).forEach(function (n) {
+            if (!n) { return; }
+            if (n.indexOf('group:') === 0) {
+                var g = byId[n.slice(6)];
+                if (g && !placed[g.id]) { placed[g.id] = true; emitGroup(g); }
+            } else if (!grouped[n]) {
+                css.push(sel(n) + ' { order: ' + (o++) + '; }');
+            }
+        });
+
+        groups.forEach(function (g) {
+            if (g && g.id && !placed[g.id]) { emitGroup(g); }
         });
 
         el.textContent = css.join('\n');

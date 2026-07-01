@@ -10,7 +10,8 @@ one auto-saving page.
 - **Reorder** entries by drag-and-drop.
 - **Groups** — create named, collapsible groups and drag plugins into them in the config page; in
   the sidebar each group becomes a header with its plugins nested underneath. Collapse state is
-  remembered per browser. Ungrouped plugins stay above the groups.
+  remembered per browser. Drag the handle in a group's title bar to move the whole group anywhere
+  in the list — groups and ungrouped plugins share one order, and the sidebar mirrors it.
 - **One row per plugin** — a plugin that registers several settings pages (e.g. AI Upscaler)
   collapses to a single entry instead of cluttering the list.
 - **Add another plugin** — plugins that don't normally appear in the sidebar (e.g. metadata
