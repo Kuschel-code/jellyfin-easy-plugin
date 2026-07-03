@@ -18,7 +18,10 @@ public class PluginConfiguration : BasePluginConfiguration
     public string[] Hidden { get; set; } = Array.Empty<string>();
 
     /// <summary>
-    /// Gets or sets the configuration-page <c>name</c> values in the desired top-to-bottom order.
+    /// Gets or sets the sidebar entries in the desired top-to-bottom order: configuration-page
+    /// <c>name</c> values, plus <c>group:&lt;id&gt;</c> tokens marking where a whole group sits
+    /// (each token precedes that group's member names). Entries without a position keep their
+    /// natural order after the positioned ones.
     /// </summary>
     public string[] Order { get; set; } = Array.Empty<string>();
 

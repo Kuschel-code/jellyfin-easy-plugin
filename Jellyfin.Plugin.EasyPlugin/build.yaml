@@ -1,7 +1,7 @@
 ---
 name: "Easy Plugin"
 guid: "f4acffe0-0347-4b20-a69d-d50d6b2b4a7e"
-version: "0.0.5.0"
+version: "0.0.6.0"
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 owner: "Kuschel-code"
@@ -15,6 +15,12 @@ category: "General"
 artifacts:
   - "Jellyfin.Plugin.EasyPlugin.dll"
 changelog: >
+  0.0.6.0 - Movable groups: drag a group's title-bar handle to place the whole
+  group anywhere in the list; groups and ungrouped plugins now share one order,
+  mirrored 1:1 by the sidebar (previously groups were stuck below all ungrouped
+  entries). Deleting a group keeps its plugins in place. Fixed duplicate event
+  listeners after "+ New group" (settings arrow appeared dead).
+
   0.0.5.0 - Sidebar groups: create named, collapsible groups and drag plugins into
   them in the config page; each group shows in the sidebar as a header with its
   plugins nested underneath (collapse state remembered per browser). Also removed

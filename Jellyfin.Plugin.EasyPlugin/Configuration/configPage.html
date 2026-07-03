@@ -66,9 +66,11 @@
                 #EasyPluginConfigPage .epNewGroup:hover { background: rgba(255,255,255,.12); }
                 #EasyPluginConfigPage .epSection { margin-bottom: .6em; }
                 #EasyPluginConfigPage .epGroupSection { border: 1px solid rgba(255,255,255,.10); border-radius: 8px; background: rgba(255,255,255,.02); }
-                #EasyPluginConfigPage .epUngroupedHead { opacity: .45; font-size: .72em; text-transform: uppercase; letter-spacing: .06em; padding: .2em .2em .45em; }
+                #EasyPluginConfigPage .epGroupSection.epDraggingSec { opacity: .5; }
+                #EasyPluginConfigPage .epTopBody { padding: 0; }
                 #EasyPluginConfigPage .epSectionHead { display: flex; align-items: center; gap: .5em; padding: .45em .7em; background: rgba(255,255,255,.05);
                     border-radius: 8px 8px 0 0; }
+                #EasyPluginConfigPage .epSecGrip { cursor: grab; opacity: .5; font-size: 1.1em; flex: 0 0 auto; user-select: none; }
                 #EasyPluginConfigPage .epGroupCaret2 { cursor: pointer; opacity: .7; transition: transform .15s; flex: 0 0 auto; }
                 #EasyPluginConfigPage .epSection.epCollapsed .epGroupCaret2 { transform: rotate(-90deg); }
                 #EasyPluginConfigPage .epSection.epCollapsed .epSectionBody { display: none; }
@@ -107,7 +109,7 @@
             </div>
 
             <div class="epCard">
-                <p class="epHint">Toggle whether each plugin appears in the sidebar, and drag the handle to reorder. Create a group, then <strong>drag plugins into it</strong> &mdash; in the sidebar each group becomes a collapsible header with its plugins nested underneath. Use the arrow to open a plugin's settings inline. Plugins that aren't normally in the sidebar are under <em>Add another plugin</em> (marked <span class="epExtra">extra</span>).</p>
+                <p class="epHint">Toggle whether each plugin appears in the sidebar, and drag the handle to reorder. Create a group, then <strong>drag plugins into it</strong> &mdash; in the sidebar each group becomes a collapsible header with its plugins nested underneath. Drag the handle in a group's title bar to <strong>move the whole group</strong> anywhere in the list. Use the arrow to open a plugin's settings inline. Plugins that aren't normally in the sidebar are under <em>Add another plugin</em> (marked <span class="epExtra">extra</span>).</p>
                 <button type="button" class="epNewGroup" id="epNewGroup">&#43; New group</button>
                 <div id="epList"><div class="epEmpty">Loading&hellip;</div></div>
             </div>
@@ -121,6 +123,7 @@
                     var page = document.querySelector('#EasyPluginConfigPage');
                     var saveTimer = null, statusTimer = null;
                     var dragged = null;          // the .epRowWrap currently being dragged
+                    var draggedSec = null;       // the .epGroupSection currently being dragged (via its head grip)
                     var groupSeq = 0;            // local counter for generating group ids
 
                     function esc(s) {
@@ -181,20 +184,15 @@
                         return rowHtml(n, pageDisplay(p), inMenu, shown);
                     }
 
-                    function sectionHtml(id, name, rows, hidden, added) {
+                    function groupHtml(id, name, rows, hidden, added) {
                         var body = rows.map(function (p) { return rowFor(p, hidden, added); }).join('');
-                        if (id === '') {
-                            return '<div class="epSection" data-group-id="">' +
-                                '<div class="epUngroupedHead">Ungrouped</div>' +
-                                '<div class="epSectionBody" data-group-id="">' + body + '</div>' +
-                            '</div>';
-                        }
                         if (!body) { body = '<div class="epPlaceholder">Drag plugins here</div>'; }
                         return '<div class="epSection epGroupSection" data-group-id="' + esc(id) + '">' +
                             '<div class="epSectionHead">' +
+                                '<span class="epGrip epSecGrip" draggable="true" title="Drag to move this group">&#10303;</span>' +
                                 '<span class="epGroupCaret2" title="Collapse">&#9662;</span>' +
                                 '<input class="epGroupNameInput" value="' + esc(name || '') + '" placeholder="Group name" />' +
-                                '<button type="button" class="epGroupDel" title="Delete group (plugins move back to Ungrouped)">&times;</button>' +
+                                '<button type="button" class="epGroupDel" title="Delete group (its plugins stay, ungrouped)">&times;</button>' +
                             '</div>' +
                             '<div class="epSectionBody" data-group-id="' + esc(id) + '">' + body + '</div>' +
                         '</div>';
@@ -256,14 +254,42 @@
                         groups.forEach(function (g) { (g.Members || []).forEach(function (m) { if (m) { memberOf[m] = g.Id; } }); });
 
                         var ungrouped = primary.filter(function (p) { return !memberOf[pageName(p)]; });
+                        var ungByName = {};
+                        ungrouped.forEach(function (p) { ungByName[pageName(p)] = p; });
+                        var groupById = {};
+                        groups.forEach(function (g) { groupById[g.Id] = g; });
 
-                        var html = sectionHtml('', null, ungrouped, hidden, added);
-                        groups.forEach(function (g) {
-                            var members = (g.Members || [])
-                                .map(function (m) { return byName[m]; })
-                                .filter(function (p) { return p && (pageInMenu(p) || added.indexOf(pageName(p)) >= 0); });
-                            html += sectionHtml(g.Id, g.Name, members, hidden, added);
+                        // ONE interleaved top-level sequence: cfg.Order positions ungrouped plugins
+                        // (by name) and whole groups (by "group:<id>" token); anything not mentioned
+                        // is appended — remaining plugins first, then remaining groups (which matches
+                        // how configs saved by older versions rendered).
+                        var items = [], seenP = {}, seenG = {};
+                        order.forEach(function (t) {
+                            if (!t) { return; }
+                            if (t.indexOf('group:') === 0) {
+                                var g = groupById[t.slice(6)];
+                                if (g && !seenG[g.Id]) { seenG[g.Id] = true; items.push({ group: g }); }
+                            } else if (ungByName[t] && !seenP[t]) {
+                                seenP[t] = true; items.push({ page: ungByName[t] });
+                            }
                         });
+                        ungrouped.forEach(function (p) {
+                            var n = pageName(p);
+                            if (!seenP[n]) { items.push({ page: p }); }
+                        });
+                        groups.forEach(function (g) {
+                            if (!seenG[g.Id]) { items.push({ group: g }); }
+                        });
+
+                        var html = '<div class="epSectionBody epTopBody" data-group-id="">' +
+                            items.map(function (it) {
+                                if (it.page) { return rowFor(it.page, hidden, added); }
+                                var members = (it.group.Members || [])
+                                    .map(function (m) { return byName[m]; })
+                                    .filter(function (p) { return p && (pageInMenu(p) || added.indexOf(pageName(p)) >= 0); });
+                                return groupHtml(it.group.Id, it.group.Name, members, hidden, added);
+                            }).join('') +
+                        '</div>';
                         if (extra.length) {
                             html += '<div class="epGroup epCollapsed epAddGroup">' +
                                 '<div class="epGroupHead">' +
@@ -287,13 +313,14 @@
                     function clearDragOver() {
                         page.querySelectorAll('.epSectionBody.epDragOver').forEach(function (b) { b.classList.remove('epDragOver'); });
                     }
-                    function dragAfter(body, y) {
-                        var wraps = Array.prototype.slice.call(body.children).filter(function (c) {
-                            return c.classList && c.classList.contains('epRowWrap') && c !== dragged;
+                    function dragAfter(body, y, dragEl) {
+                        var kids = Array.prototype.slice.call(body.children).filter(function (c) {
+                            if (c === dragEl || !c.classList) { return false; }
+                            return c.classList.contains('epRowWrap') || c.classList.contains('epGroupSection');
                         });
-                        for (var i = 0; i < wraps.length; i++) {
-                            var rect = wraps[i].getBoundingClientRect();
-                            if (y < rect.top + rect.height / 2) { return wraps[i]; }
+                        for (var i = 0; i < kids.length; i++) {
+                            var rect = kids[i].getBoundingClientRect();
+                            if (y < rect.top + rect.height / 2) { return kids[i]; }
                         }
                         return null;
                     }
@@ -310,8 +337,12 @@
                         });
                     }
 
+                    // All wire* helpers are re-run over the whole list after DOM changes; the
+                    // data-wired guard keeps that idempotent (no duplicate listeners).
                     function wireRows(list) {
                         list.querySelectorAll('.epRowWrap').forEach(function (wrap) {
+                            if (wrap.getAttribute('data-wired')) { return; }
+                            wrap.setAttribute('data-wired', '1');
                             var row = wrap.querySelector('.epRow');
                             row.addEventListener('dragstart', function (e) {
                                 dragged = wrap; row.classList.add('epDragging');
@@ -337,16 +368,28 @@
                         });
                     }
 
-                    // Section bodies (ungrouped + each group) are drop targets; dragging a row over a
-                    // body moves it there at the cursor position — this is how plugins are assigned.
+                    // Section bodies (the top-level list + each group) are drop targets; dragging a
+                    // row over a body moves it there at the cursor position — this is how plugins
+                    // are assigned. Dragging a group (by its head grip) repositions the whole
+                    // section, but only at the top level (groups don't nest). Group bodies sit
+                    // inside the top body, so handled drags stop propagation.
                     function wireSections(list) {
                         list.querySelectorAll('.epSectionBody').forEach(function (body) {
+                            if (body.getAttribute('data-wired')) { return; }
+                            body.setAttribute('data-wired', '1');
                             body.addEventListener('dragover', function (e) {
+                                if (draggedSec) {
+                                    if (!body.classList.contains('epTopBody')) { return; }
+                                    e.preventDefault(); e.stopPropagation();
+                                    var afterSec = dragAfter(body, e.clientY, draggedSec);
+                                    if (afterSec == null) { body.appendChild(draggedSec); } else { body.insertBefore(draggedSec, afterSec); }
+                                    return;
+                                }
                                 if (!dragged) { return; }
-                                e.preventDefault();
+                                e.preventDefault(); e.stopPropagation();
                                 body.classList.add('epDragOver');
-                                var ph = body.querySelector('.epPlaceholder'); if (ph) { ph.remove(); }
-                                var after = dragAfter(body, e.clientY);
+                                var ph = body.querySelector(':scope > .epPlaceholder'); if (ph) { ph.remove(); }
+                                var after = dragAfter(body, e.clientY, dragged);
                                 if (after == null) { body.appendChild(dragged); } else { body.insertBefore(dragged, after); }
                             });
                             body.addEventListener('dragleave', function (e) {
@@ -357,15 +400,34 @@
 
                     function wireGroupControls(list) {
                         list.querySelectorAll('.epGroupSection').forEach(function (sec) {
+                            if (sec.getAttribute('data-wired')) { return; }
+                            sec.setAttribute('data-wired', '1');
                             var input = sec.querySelector('.epGroupNameInput');
                             if (input) { input.addEventListener('input', scheduleSave); }
                             var caret = sec.querySelector('.epGroupCaret2');
                             if (caret) { caret.addEventListener('click', function () { sec.classList.toggle('epCollapsed'); }); }
+                            var grip = sec.querySelector('.epSecGrip');
+                            if (grip) {
+                                grip.addEventListener('dragstart', function (e) {
+                                    draggedSec = sec; sec.classList.add('epDraggingSec');
+                                    try {
+                                        e.dataTransfer.effectAllowed = 'move';
+                                        e.dataTransfer.setDragImage(sec, 24, 18);
+                                    } catch (_) { /* ignore */ }
+                                });
+                                grip.addEventListener('dragend', function () {
+                                    sec.classList.remove('epDraggingSec');
+                                    draggedSec = null; clearDragOver(); scheduleSave();
+                                });
+                            }
                             var del = sec.querySelector('.epGroupDel');
                             if (del) {
                                 del.addEventListener('click', function () {
-                                    var ung = list.querySelector('.epSectionBody[data-group-id=""]');
-                                    sec.querySelectorAll('.epSectionBody .epRowWrap').forEach(function (w) { ung.appendChild(w); });
+                                    // Members stay in place — they become ungrouped entries exactly
+                                    // where the group used to sit.
+                                    Array.prototype.slice.call(sec.querySelectorAll('.epSectionBody .epRowWrap')).forEach(function (w) {
+                                        sec.parentNode.insertBefore(w, sec);
+                                    });
                                     sec.remove();
                                     refreshPlaceholders();
                                     scheduleSave();
@@ -378,18 +440,21 @@
                     // draggable into groups once turned on (which makes them real sidebar entries).
                     function wireAddGroup(list) {
                         list.querySelectorAll('.epAddGroup').forEach(function (g) {
+                            if (g.getAttribute('data-wired')) { return; }
+                            g.setAttribute('data-wired', '1');
                             g.querySelector('.epGroupHead').addEventListener('click', function () { g.classList.toggle('epCollapsed'); });
                         });
                     }
 
                     function addGroup() {
                         var list = page.querySelector('#epList');
+                        var topBody = list.querySelector('.epTopBody');
+                        if (!topBody) { return; }
                         var tmp = document.createElement('div');
-                        tmp.innerHTML = sectionHtml(newGroupId(), 'New group', [], [], []);
+                        tmp.innerHTML = groupHtml(newGroupId(), 'New group', [], [], []);
                         var sec = tmp.firstChild;
-                        var addGroupEl = list.querySelector('.epAddGroup');
-                        list.insertBefore(sec, addGroupEl || null);   // before extras, else at end
-                        wireRows(list); wireSections(list); wireGroupControls(list);
+                        topBody.appendChild(sec);
+                        wireSections(list); wireGroupControls(list);
                         var input = sec.querySelector('.epGroupNameInput');
                         if (input) { input.focus(); input.select(); }
                         scheduleSave();
@@ -437,7 +502,17 @@
                         ApiClient.getPluginConfiguration(pluginId).then(function (cfg) {
                             var rows = Array.prototype.slice.call(page.querySelectorAll('.epRow'));
                             cfg.Enabled = page.querySelector('#epEnabled').checked;
-                            cfg.Order = rows.map(function (r) { return r.getAttribute('data-name'); });
+                            // Order is one top-to-bottom sequence in document order: plugin names,
+                            // plus a "group:<id>" token where each group section sits (the token
+                            // precedes the group's member rows). The sidebar script and render()
+                            // use the tokens to place whole groups; name lookups just skip them.
+                            cfg.Order = Array.prototype.map.call(
+                                page.querySelectorAll('#epList .epRow, #epList .epGroupSection'),
+                                function (el) {
+                                    return el.classList.contains('epGroupSection')
+                                        ? 'group:' + el.getAttribute('data-group-id')
+                                        : el.getAttribute('data-name');
+                                });
                             cfg.Hidden = rows.filter(function (r) {
                                 return r.getAttribute('data-inmenu') === '1' && !r.querySelector('.epVis').checked;
                             }).map(function (r) { return r.getAttribute('data-name'); });
