@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/Kuschel-code/jellyfin-easy-plugin/main/logo.svg",
     "versions": [
       {
+        "version": "0.0.6.0",
+        "changelog": "Movable groups: drag a group's title-bar handle to place the whole group anywhere in the list; groups and ungrouped plugins now share one order, mirrored 1:1 by the sidebar (previously groups were stuck below all ungrouped entries). Deleting a group keeps its plugins in place. Fixed duplicate event listeners after \"+ New group\" (settings arrow appeared dead).",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Kuschel-code/jellyfin-easy-plugin/releases/download/v0.0.6/easy-plugin_0.0.6.zip",
+        "checksum": "06fe7c47029b99bc11e88080f664266b",
+        "timestamp": "2026-07-03T18:08:59Z"
+      },
+      {
         "version": "0.0.5.0",
         "changelog": "Sidebar groups: create named, collapsible groups and drag plugins into them in the config page; each group shows in the sidebar as a header with its plugins nested underneath (collapse remembered per browser). Also removed the black bar on the left of the inline settings view.",
         "targetAbi": "10.11.0.0",
