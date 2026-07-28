@@ -18,7 +18,7 @@
                 #EasyPluginConfigPage .epWarn { color: #f0ad4e; }
 
                 #EasyPluginConfigPage .epRowWrap { margin-bottom: .55em; }
-                #EasyPluginConfigPage .epRow { display: flex; align-items: center; gap: .8em; width: 100%; box-sizing: border-box;
+                #EasyPluginConfigPage .epRow { display: flex; align-items: center; gap: .5em; width: 100%; box-sizing: border-box;
                     background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: .55em .8em; }
                 #EasyPluginConfigPage .epRow.epDragging { opacity: .5; }
                 #EasyPluginConfigPage .epGrip { cursor: grab; opacity: .5; font-size: 1.2em; flex: 0 0 auto; user-select: none; }
@@ -27,11 +27,25 @@
                 #EasyPluginConfigPage .epArrow:hover { opacity: 1; background: rgba(255,255,255,.08); }
                 #EasyPluginConfigPage .epArrow.epOpen { transform: rotate(90deg); opacity: 1; }
                 #EasyPluginConfigPage .epRowMain { flex: 1 1 auto; min-width: 0; }
-                #EasyPluginConfigPage .epName { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                 #EasyPluginConfigPage .epKey { opacity: .45; font-size: .8em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                 #EasyPluginConfigPage .epExtra { display: inline-block; font-size: .68em; font-weight: 600; text-transform: uppercase;
                     letter-spacing: .04em; color: var(--ep-accent); border: 1px solid var(--ep-accent); border-radius: 4px; padding: 0 .4em; margin-left: .5em; vertical-align: middle; }
-                #EasyPluginConfigPage .epRow.epHidden .epName { opacity: .4; text-decoration: line-through; }
+                #EasyPluginConfigPage .epRow.epHidden .epNameInput { opacity: .4; text-decoration: line-through; }
+
+                /* the label doubles as the rename field: looks like text until you focus it */
+                #EasyPluginConfigPage .epNameInput { width: 100%; background: transparent; border: 0; border-bottom: 1px solid transparent;
+                    color: inherit; font-weight: 600; font-size: 1em; padding: .1em .2em; box-sizing: border-box; }
+                #EasyPluginConfigPage .epNameInput:hover { border-bottom-color: rgba(255,255,255,.2); }
+                #EasyPluginConfigPage .epNameInput:focus { border-bottom-color: var(--ep-accent); outline: none; }
+                #EasyPluginConfigPage .epRenamed { color: var(--ep-accent); opacity: .8; font-size: .8em; margin-left: .3em; }
+
+                /* up/down move buttons — the touch- and keyboard-accessible path (HTML5 drag
+                   events never fire on mobile browsers, so dragging alone is not enough) */
+                #EasyPluginConfigPage .epMove { display: flex; flex-direction: column; flex: 0 0 auto; gap: 1px; }
+                #EasyPluginConfigPage .epMoveBtn { cursor: pointer; background: none; border: 0; color: inherit; opacity: .55;
+                    font-size: .7em; line-height: 1; padding: .18em .35em; border-radius: 3px; }
+                #EasyPluginConfigPage .epMoveBtn:hover { opacity: 1; background: rgba(255,255,255,.1); }
+                #EasyPluginConfigPage .epMoveBtn:focus-visible { outline: 2px solid var(--ep-accent); opacity: 1; }
 
                 #EasyPluginConfigPage .epSwitch { position: relative; flex: 0 0 auto; width: 46px; height: 26px; display: inline-block; }
                 #EasyPluginConfigPage .epSwitch input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
@@ -60,10 +74,17 @@
                 #EasyPluginConfigPage .epGroupBody .epRowWrap { margin-bottom: .4em; }
                 #EasyPluginConfigPage .epGroupBody .epRow { background: rgba(255,255,255,.02); }
 
-                /* user-defined groups (drag plugins between sections to assign) */
+                /* user-defined groups (drag or move plugins between sections to assign) */
                 #EasyPluginConfigPage .epNewGroup { cursor: pointer; background: rgba(255,255,255,.06); border: 1px dashed rgba(255,255,255,.22);
-                    color: inherit; border-radius: 8px; padding: .5em .9em; font: inherit; margin-bottom: .8em; }
+                    color: inherit; border-radius: 8px; padding: .5em .9em; font: inherit; }
                 #EasyPluginConfigPage .epNewGroup:hover { background: rgba(255,255,255,.12); }
+                #EasyPluginConfigPage .epTools { display: flex; flex-wrap: wrap; align-items: center; gap: .5em; margin-bottom: .8em; }
+                #EasyPluginConfigPage .epToolBtn { cursor: pointer; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16);
+                    color: inherit; border-radius: 8px; padding: .5em .9em; font: inherit; }
+                #EasyPluginConfigPage .epToolBtn:hover { background: rgba(255,255,255,.12); }
+                #EasyPluginConfigPage .epScope { margin-left: auto; display: flex; align-items: center; gap: .5em; }
+                #EasyPluginConfigPage .epScope select { background: rgba(0,0,0,.25); color: inherit; border: 1px solid rgba(255,255,255,.16);
+                    border-radius: 6px; padding: .4em .5em; font: inherit; }
                 #EasyPluginConfigPage .epSection { margin-bottom: .6em; }
                 #EasyPluginConfigPage .epGroupSection { border: 1px solid rgba(255,255,255,.10); border-radius: 8px; background: rgba(255,255,255,.02); }
                 #EasyPluginConfigPage .epGroupSection.epDraggingSec { opacity: .5; }
@@ -78,17 +99,23 @@
                     color: inherit; font-weight: 600; font-size: 1em; padding: .1em .2em; }
                 #EasyPluginConfigPage .epGroupNameInput:hover { border-bottom-color: rgba(255,255,255,.2); }
                 #EasyPluginConfigPage .epGroupNameInput:focus { border-bottom-color: var(--ep-accent); outline: none; }
+                #EasyPluginConfigPage .epIconInput { flex: 0 0 7em; background: rgba(0,0,0,.2); border: 1px solid rgba(255,255,255,.12);
+                    border-radius: 5px; color: inherit; font: inherit; font-size: .85em; padding: .25em .4em; }
+                #EasyPluginConfigPage .epIconInput:focus { border-color: var(--ep-accent); outline: none; }
                 #EasyPluginConfigPage .epGroupDel { cursor: pointer; background: none; border: 0; color: inherit; opacity: .5; font-size: 1.3em; line-height: 1; padding: 0 .25em; flex: 0 0 auto; }
                 #EasyPluginConfigPage .epGroupDel:hover { opacity: 1; color: #e57373; }
                 #EasyPluginConfigPage .epSectionBody { padding: .5em; min-height: .5em; transition: background .12s; }
                 #EasyPluginConfigPage .epSectionBody.epDragOver { background: rgba(0,164,220,.12); box-shadow: inset 0 0 0 1px var(--ep-accent); border-radius: 6px; }
                 #EasyPluginConfigPage .epPlaceholder { opacity: .4; font-size: .85em; text-align: center; padding: .9em; border: 1px dashed rgba(255,255,255,.16); border-radius: 6px; }
 
-                #EasyPluginConfigPage .epToggleRow { display: flex; align-items: center; gap: 1em; }
+                #EasyPluginConfigPage .epToggleRow { display: flex; align-items: center; gap: 1em; margin-bottom: .9em; }
+                #EasyPluginConfigPage .epToggleRow:last-child { margin-bottom: 0; }
                 #EasyPluginConfigPage .epToggleMain { flex: 1 1 auto; min-width: 0; }
                 #EasyPluginConfigPage .epEmpty { opacity: .6; padding: 1.6em; text-align: center; }
                 #EasyPluginConfigPage .epStatus { height: 1.2em; font-size: .85em; opacity: 0; transition: opacity .2s; color: #66bb6a; }
                 #EasyPluginConfigPage .epStatus.show { opacity: .85; }
+                #EasyPluginConfigPage .epNavSec { margin-bottom: .8em; }
+                #EasyPluginConfigPage .epNavHead { font-weight: 600; opacity: .8; margin-bottom: .35em; }
             </style>
 
             <h2 class="epHead">Easy Plugin</h2>
@@ -105,26 +132,83 @@
                         <div class="epHint" style="margin:0;">When off, the sidebar is left untouched.</div>
                     </div>
                 </div>
+                <div class="epToggleRow">
+                    <label class="epSwitch">
+                        <input type="checkbox" id="epShowSearch" />
+                        <span class="epSlider"></span>
+                    </label>
+                    <div class="epToggleMain">
+                        <div>Show a filter box in the sidebar</div>
+                        <div class="epHint" style="margin:0;">Adds a search field above the plugin list — handy once you have many plugins.</div>
+                    </div>
+                </div>
+                <div class="epToggleRow">
+                    <label class="epSwitch">
+                        <input type="checkbox" id="epPerUser" />
+                        <span class="epSlider"></span>
+                    </label>
+                    <div class="epToggleMain">
+                        <div>A separate layout per user</div>
+                        <div class="epHint" style="margin:0;">Off: everyone shares one layout. On: each admin arranges their own, falling back to the server default until they change something.</div>
+                    </div>
+                </div>
                 <div id="epWarn" class="epHint epWarn" style="display:none; margin:.8em 0 0;"></div>
             </div>
 
             <div class="epCard">
-                <p class="epHint">Toggle whether each plugin appears in the sidebar, and drag the handle to reorder. Create a group, then <strong>drag plugins into it</strong> &mdash; in the sidebar each group becomes a collapsible header with its plugins nested underneath. Drag the handle in a group's title bar to <strong>move the whole group</strong> anywhere in the list. Use the arrow to open a plugin's settings inline. Plugins that aren't normally in the sidebar are under <em>Add another plugin</em> (marked <span class="epExtra">extra</span>).</p>
-                <button type="button" class="epNewGroup" id="epNewGroup">&#43; New group</button>
+                <p class="epHint">Toggle whether each plugin appears in the sidebar, then reorder with the <strong>&#9650;/&#9660; buttons</strong> or by dragging the handle. Moving an entry onto a group puts it inside; moving it past the end takes it back out. Create a group and give it a name (and optionally a Material icon such as <code>tune</code>) &mdash; in the sidebar it becomes a collapsible header with its plugins nested underneath. Rename any entry by typing over its label. Plugins that aren't normally in the sidebar are under <em>Add another plugin</em> (marked <span class="epExtra">extra</span>).</p>
+                <div class="epTools">
+                    <button type="button" class="epNewGroup" id="epNewGroup">&#43; New group</button>
+                    <button type="button" class="epToolBtn" id="epExport" title="Download the whole configuration as JSON">Export</button>
+                    <button type="button" class="epToolBtn" id="epImport" title="Restore a configuration from a JSON file">Import</button>
+                    <input type="file" id="epImportFile" accept="application/json,.json" style="display:none;" />
+                    <div class="epScope" id="epScopeWrap" style="display:none;">
+                        <label for="epScope">Editing</label>
+                        <select id="epScope">
+                            <option value="user">My layout</option>
+                            <option value="default">Server default</option>
+                        </select>
+                    </div>
+                </div>
                 <div id="epList"><div class="epEmpty">Loading&hellip;</div></div>
             </div>
 
+            <div class="epCard">
+                <div class="epGroup epCollapsed" id="epNavCard">
+                    <div class="epGroupHead" id="epNavHeadToggle">
+                        <span class="epGroupCaret">&#9662;</span>
+                        <span class="epGroupName">The rest of the sidebar<span class="epGroupCount" id="epNavCount"></span></span>
+                    </div>
+                    <div class="epGroupBody">
+                        <p class="epHint">The other sidebar sections hold Jellyfin's own pages rather than plugins, so they can only be hidden and reordered &mdash; no grouping or renaming.</p>
+                        <div id="epNav"><div class="epEmpty">Loading&hellip;</div></div>
+                    </div>
+                </div>
+            </div>
+
             <div class="epStatus" id="epStatus"></div>
+
+            <datalist id="epIconList">
+                <option value="tune"></option><option value="settings"></option><option value="extension"></option>
+                <option value="movie"></option><option value="live_tv"></option><option value="music_note"></option>
+                <option value="subtitles"></option><option value="cloud"></option><option value="storage"></option>
+                <option value="security"></option><option value="palette"></option><option value="build"></option>
+            </datalist>
 
             <script type="text/javascript">
                 (function () {
                     var pluginId = "f4acffe0-0347-4b20-a69d-d50d6b2b4a7e";
                     var SELF = "EasyPlugin";
+                    var PLUGINS_SECTION = "plugins-subheader";
                     var page = document.querySelector('#EasyPluginConfigPage');
                     var saveTimer = null, statusTimer = null;
                     var dragged = null;          // the .epRowWrap currently being dragged
                     var draggedSec = null;       // the .epGroupSection currently being dragged (via its head grip)
                     var groupSeq = 0;            // local counter for generating group ids
+                    var scope = 'default';       // which layout the editor is showing: 'default' or 'user'
+                    var scopePicked = false;     // true once the initial scope has been settled, so
+                                                 // reloading never overrides an explicit choice
+                    var userId = null;           // the signed-in user, for per-user layouts
 
                     function esc(s) {
                         return String(s == null ? '' : s)
@@ -145,6 +229,10 @@
                         groupSeq += 1;
                         return 'g' + Date.now().toString(36) + groupSeq.toString(36);
                     }
+                    function prop(o, a, b) {
+                        if (!o) { return undefined; }
+                        return o[a] != null ? o[a] : o[b];
+                    }
 
                     function getConfigPages() {
                         return ApiClient.getJSON(ApiClient.getUrl('web/ConfigurationPages'))
@@ -158,16 +246,62 @@
                         statusTimer = setTimeout(function () { el.classList.remove('show'); }, 1500);
                     }
 
-                    function rowHtml(name, display, inMenu, shown) {
+                    // --- layout selection ------------------------------------------------------
+
+                    // Which stored layout the editor is showing. Mirrors the server's rule: a user's
+                    // own layout when per-user is on and they have one, otherwise the default.
+                    function layoutOf(cfg) {
+                        if (scope === 'user' && cfg.PerUser && userId) {
+                            var mine = (cfg.Users || []).filter(function (u) {
+                                return String(prop(u, 'UserId', 'userId') || '').toLowerCase() === String(userId).toLowerCase();
+                            })[0];
+                            if (mine) { return mine; }
+                        }
+                        return cfg;   // the flat fields on the configuration are the server default
+                    }
+
+                    function normalizeLayout(l) {
+                        return {
+                            hidden: prop(l, 'Hidden', 'hidden') || [],
+                            order: prop(l, 'Order', 'order') || [],
+                            added: (prop(l, 'Added', 'added') || []).map(function (a) {
+                                return { name: prop(a, 'Name', 'name'), display: prop(a, 'DisplayName', 'displayName') };
+                            }),
+                            groups: (prop(l, 'Groups', 'groups') || []).map(function (g) {
+                                return {
+                                    id: prop(g, 'Id', 'id'), name: prop(g, 'Name', 'name'),
+                                    icon: prop(g, 'Icon', 'icon') || '', members: prop(g, 'Members', 'members') || []
+                                };
+                            }),
+                            renames: (prop(l, 'Renames', 'renames') || []).map(function (r) {
+                                return { name: prop(r, 'Name', 'name'), display: prop(r, 'DisplayName', 'displayName') };
+                            }),
+                            sections: (prop(l, 'Sections', 'sections') || []).map(function (s) {
+                                return {
+                                    id: prop(s, 'Id', 'id'),
+                                    hidden: prop(s, 'Hidden', 'hidden') || [],
+                                    order: prop(s, 'Order', 'order') || []
+                                };
+                            })
+                        };
+                    }
+
+                    // --- rendering -------------------------------------------------------------
+
+                    function rowHtml(name, display, inMenu, shown, label) {
                         var cls = 'epRow' + (shown ? '' : ' epHidden');
-                        var extra = inMenu ? '' : '<span class="epExtra">extra</span>';
+                        var extra = inMenu ? '<span class="epExtra" style="display:none;"></span>' : '<span class="epExtra">extra</span>';
                         return '<div class="epRowWrap">' +
                             '<div class="' + cls + '" draggable="true" data-name="' + esc(name) + '" data-inmenu="' + (inMenu ? '1' : '0') + '" data-display="' + esc(display) + '">' +
                                 '<span class="epGrip" title="Drag to reorder / into a group">&#10303;</span>' +
+                                '<span class="epMove">' +
+                                    '<button type="button" class="epMoveBtn" data-dir="-1" title="Move up" aria-label="Move up">&#9650;</button>' +
+                                    '<button type="button" class="epMoveBtn" data-dir="1" title="Move down" aria-label="Move down">&#9660;</button>' +
+                                '</span>' +
                                 '<button type="button" class="epArrow" title="Show settings">&#9654;</button>' +
                                 '<div class="epRowMain">' +
-                                    '<div class="epName">' + esc(display) + extra + '</div>' +
-                                    '<div class="epKey">' + esc(name) + '</div>' +
+                                    '<input class="epNameInput" value="' + esc(label) + '" aria-label="Sidebar label" />' +
+                                    '<div class="epKey">' + esc(name) + extra + '</div>' +
                                 '</div>' +
                                 '<label class="epSwitch" title="Show in sidebar">' +
                                     '<input type="checkbox" class="epVis" ' + (shown ? 'checked' : '') + ' />' +
@@ -178,20 +312,35 @@
                         '</div>';
                     }
 
-                    function rowFor(p, hidden, added) {
+                    function rowFor(p, L) {
                         var n = pageName(p), inMenu = pageInMenu(p);
-                        var shown = inMenu ? (hidden.indexOf(n) < 0) : (added.indexOf(n) >= 0);
-                        return rowHtml(n, pageDisplay(p), inMenu, shown);
+                        var addedNames = L.added.map(function (a) { return a.name; });
+                        var shown = inMenu ? (L.hidden.indexOf(n) < 0) : (addedNames.indexOf(n) >= 0);
+                        var original = pageDisplay(p);
+                        var label = original;
+                        if (inMenu) {
+                            var r = L.renames.filter(function (x) { return x.name === n; })[0];
+                            if (r && r.display) { label = r.display; }
+                        } else {
+                            var a = L.added.filter(function (x) { return x.name === n; })[0];
+                            if (a && a.display) { label = a.display; }
+                        }
+                        return rowHtml(n, original, inMenu, shown, label);
                     }
 
-                    function groupHtml(id, name, rows, hidden, added) {
-                        var body = rows.map(function (p) { return rowFor(p, hidden, added); }).join('');
+                    function groupHtml(id, name, icon, rows, L) {
+                        var body = rows.map(function (p) { return rowFor(p, L); }).join('');
                         if (!body) { body = '<div class="epPlaceholder">Drag plugins here</div>'; }
                         return '<div class="epSection epGroupSection" data-group-id="' + esc(id) + '">' +
                             '<div class="epSectionHead">' +
                                 '<span class="epGrip epSecGrip" draggable="true" title="Drag to move this group">&#10303;</span>' +
+                                '<span class="epMove">' +
+                                    '<button type="button" class="epMoveBtn epSecMove" data-dir="-1" title="Move group up" aria-label="Move group up">&#9650;</button>' +
+                                    '<button type="button" class="epMoveBtn epSecMove" data-dir="1" title="Move group down" aria-label="Move group down">&#9660;</button>' +
+                                '</span>' +
                                 '<span class="epGroupCaret2" title="Collapse">&#9662;</span>' +
-                                '<input class="epGroupNameInput" value="' + esc(name || '') + '" placeholder="Group name" />' +
+                                '<input class="epGroupNameInput" value="' + esc(name || '') + '" placeholder="Group name" aria-label="Group name" />' +
+                                '<input class="epIconInput" list="epIconList" value="' + esc(icon || '') + '" placeholder="icon" title="Material icon name, e.g. tune" aria-label="Group icon" />' +
                                 '<button type="button" class="epGroupDel" title="Delete group (its plugins stay, ungrouped)">&times;</button>' +
                             '</div>' +
                             '<div class="epSectionBody" data-group-id="' + esc(id) + '">' + body + '</div>' +
@@ -209,13 +358,9 @@
                             return true;
                         });
 
-                        var hidden = cfg.Hidden || [];
-                        var added = (cfg.Added || []).map(function (a) { return a.Name != null ? a.Name : a.name; });
-                        var groups = (cfg.Groups || []).map(function (g) {
-                            return { Id: g.Id != null ? g.Id : g.id, Name: g.Name != null ? g.Name : g.name,
-                                     Members: (g.Members || g.members || []) };
-                        });
-                        var order = (cfg.Order && cfg.Order.length) ? cfg.Order : pages.map(pageName);
+                        var L = normalizeLayout(layoutOf(cfg));
+                        var addedNames = L.added.map(function (a) { return a.name; });
+                        var order = L.order.length ? L.order : pages.map(pageName);
 
                         var sorted = pages.slice().sort(function (a, b) {
                             var ia = order.indexOf(pageName(a)); if (ia < 0) { ia = order.length; }
@@ -245,30 +390,29 @@
                         repr.forEach(function (p) {
                             var n = pageName(p);
                             byName[n] = p;
-                            if (pageInMenu(p) || added.indexOf(n) >= 0) { primary.push(p); }
+                            if (pageInMenu(p) || addedNames.indexOf(n) >= 0) { primary.push(p); }
                             else { extra.push(p); }
                         });
 
-                        // which primary plugins are assigned to a group
                         var memberOf = {};
-                        groups.forEach(function (g) { (g.Members || []).forEach(function (m) { if (m) { memberOf[m] = g.Id; } }); });
+                        L.groups.forEach(function (g) { (g.members || []).forEach(function (m) { if (m) { memberOf[m] = g.id; } }); });
 
                         var ungrouped = primary.filter(function (p) { return !memberOf[pageName(p)]; });
                         var ungByName = {};
                         ungrouped.forEach(function (p) { ungByName[pageName(p)] = p; });
                         var groupById = {};
-                        groups.forEach(function (g) { groupById[g.Id] = g; });
+                        L.groups.forEach(function (g) { groupById[g.id] = g; });
 
-                        // ONE interleaved top-level sequence: cfg.Order positions ungrouped plugins
-                        // (by name) and whole groups (by "group:<id>" token); anything not mentioned
-                        // is appended — remaining plugins first, then remaining groups (which matches
+                        // ONE interleaved top-level sequence: order positions ungrouped plugins (by
+                        // name) and whole groups (by "group:<id>" token); anything not mentioned is
+                        // appended — remaining plugins first, then remaining groups (which matches
                         // how configs saved by older versions rendered).
                         var items = [], seenP = {}, seenG = {};
                         order.forEach(function (t) {
                             if (!t) { return; }
                             if (t.indexOf('group:') === 0) {
                                 var g = groupById[t.slice(6)];
-                                if (g && !seenG[g.Id]) { seenG[g.Id] = true; items.push({ group: g }); }
+                                if (g && !seenG[g.id]) { seenG[g.id] = true; items.push({ group: g }); }
                             } else if (ungByName[t] && !seenP[t]) {
                                 seenP[t] = true; items.push({ page: ungByName[t] });
                             }
@@ -277,19 +421,20 @@
                             var n = pageName(p);
                             if (!seenP[n]) { items.push({ page: p }); }
                         });
-                        groups.forEach(function (g) {
-                            if (!seenG[g.Id]) { items.push({ group: g }); }
+                        L.groups.forEach(function (g) {
+                            if (!seenG[g.id]) { items.push({ group: g }); }
                         });
 
                         var html = '<div class="epSectionBody epTopBody" data-group-id="">' +
                             items.map(function (it) {
-                                if (it.page) { return rowFor(it.page, hidden, added); }
-                                var members = (it.group.Members || [])
+                                if (it.page) { return rowFor(it.page, L); }
+                                var members = (it.group.members || [])
                                     .map(function (m) { return byName[m]; })
-                                    .filter(function (p) { return p && (pageInMenu(p) || added.indexOf(pageName(p)) >= 0); });
-                                return groupHtml(it.group.Id, it.group.Name, members, hidden, added);
+                                    .filter(function (p) { return p && (pageInMenu(p) || addedNames.indexOf(pageName(p)) >= 0); });
+                                return groupHtml(it.group.id, it.group.name, it.group.icon, members, L);
                             }).join('') +
                         '</div>';
+
                         if (extra.length) {
                             html += '<div class="epGroup epCollapsed epAddGroup">' +
                                 '<div class="epGroupHead">' +
@@ -297,7 +442,7 @@
                                     '<span class="epGroupName">Add another plugin<span class="epGroupCount">' + extra.length + ' available</span></span>' +
                                 '</div>' +
                                 '<div class="epGroupBody">' +
-                                    extra.map(function (p) { return rowFor(p, hidden, added); }).join('') +
+                                    extra.map(function (p) { return rowFor(p, L); }).join('') +
                                 '</div>' +
                             '</div>';
                         }
@@ -306,6 +451,105 @@
                         wireSections(list);
                         wireGroupControls(list);
                         wireAddGroup(list);
+                    }
+
+                    // --- the other sidebar sections --------------------------------------------
+
+                    // This page renders inside the dashboard, so the real drawer is in the same
+                    // document — read the live sections from it rather than guessing Jellyfin's
+                    // route list, which changes between versions.
+                    function drawerSections() {
+                        var out = [];
+                        var lists = document.querySelectorAll('ul[aria-labelledby]');
+                        Array.prototype.forEach.call(lists, function (ul) {
+                            var id = ul.getAttribute('aria-labelledby');
+                            if (!id || id === PLUGINS_SECTION) { return; }
+                            var entries = [];
+                            Array.prototype.forEach.call(ul.querySelectorAll('a[href]'), function (a) {
+                                var label = a.querySelector('.MuiListItemText-primary')
+                                    || a.querySelector('.MuiListItemText-root');
+                                entries.push({
+                                    href: a.getAttribute('href'),
+                                    label: (label ? label.textContent : a.textContent || '').trim()
+                                });
+                            });
+                            if (entries.length) {
+                                var head = document.getElementById(id);
+                                out.push({ id: id, title: (head ? head.textContent : id) || id, entries: entries });
+                            }
+                        });
+                        return out;
+                    }
+
+                    function renderNav(cfg) {
+                        var host = page.querySelector('#epNav');
+                        var count = page.querySelector('#epNavCount');
+                        var live = drawerSections();
+                        if (!live.length) {
+                            host.innerHTML = '<div class="epEmpty">No other sidebar sections found on this page.</div>';
+                            count.textContent = '';
+                            return;
+                        }
+
+                        var L = normalizeLayout(layoutOf(cfg));
+                        var stored = {};
+                        L.sections.forEach(function (s) { if (s.id) { stored[s.id] = s; } });
+                        var total = 0;
+
+                        host.innerHTML = live.map(function (sec) {
+                            var s = stored[sec.id] || { hidden: [], order: [] };
+                            var entries = sec.entries.slice().sort(function (a, b) {
+                                var ia = s.order.indexOf(a.href); if (ia < 0) { ia = s.order.length; }
+                                var ib = s.order.indexOf(b.href); if (ib < 0) { ib = s.order.length; }
+                                return ia - ib;
+                            });
+                            total += entries.length;
+                            return '<div class="epNavSec" data-section-id="' + esc(sec.id) + '">' +
+                                '<div class="epNavHead">' + esc(sec.title) + '</div>' +
+                                entries.map(function (e) {
+                                    var shown = s.hidden.indexOf(e.href) < 0;
+                                    return '<div class="epRowWrap epSecRowWrap">' +
+                                        '<div class="epRow epSecRow' + (shown ? '' : ' epHidden') + '" data-href="' + esc(e.href) + '">' +
+                                            '<span class="epMove">' +
+                                                '<button type="button" class="epMoveBtn epNavMove" data-dir="-1" title="Move up" aria-label="Move up">&#9650;</button>' +
+                                                '<button type="button" class="epMoveBtn epNavMove" data-dir="1" title="Move down" aria-label="Move down">&#9660;</button>' +
+                                            '</span>' +
+                                            '<div class="epRowMain">' +
+                                                '<div class="epNameInput" style="font-weight:600;">' + esc(e.label || e.href) + '</div>' +
+                                                '<div class="epKey">' + esc(e.href) + '</div>' +
+                                            '</div>' +
+                                            '<label class="epSwitch" title="Show in sidebar">' +
+                                                '<input type="checkbox" class="epVis" ' + (shown ? 'checked' : '') + ' />' +
+                                                '<span class="epSlider"></span>' +
+                                            '</label>' +
+                                        '</div>' +
+                                    '</div>';
+                                }).join('') +
+                            '</div>';
+                        }).join('');
+                        count.textContent = total + ' entries';
+                        wireNav(host);
+                    }
+
+                    function wireNav(host) {
+                        host.querySelectorAll('.epSecRowWrap').forEach(function (wrap) {
+                            var row = wrap.querySelector('.epSecRow');
+                            row.querySelector('.epVis').addEventListener('change', function (e) {
+                                row.classList.toggle('epHidden', !e.target.checked);
+                                scheduleSave();
+                            });
+                            wrap.querySelectorAll('.epNavMove').forEach(function (btn) {
+                                btn.addEventListener('click', function () {
+                                    var dir = Number(btn.getAttribute('data-dir'));
+                                    var sib = dir < 0 ? wrap.previousElementSibling : wrap.nextElementSibling;
+                                    if (!sib || !sib.classList.contains('epSecRowWrap')) { return; }
+                                    if (dir < 0) { wrap.parentNode.insertBefore(wrap, sib); }
+                                    else { wrap.parentNode.insertBefore(sib, wrap); }
+                                    btn.focus();
+                                    scheduleSave();
+                                });
+                            });
+                        });
                     }
 
                     // --- drag & drop -----------------------------------------------------------
@@ -337,6 +581,65 @@
                         });
                     }
 
+                    // --- keyboard/touch moving -------------------------------------------------
+
+                    // Step a row one position up or down. Crossing a group boundary moves the row
+                    // into or out of that group, so the whole layout — including grouping — is
+                    // reachable without a pointer. HTML5 drag events never fire on touch devices,
+                    // so this is the only path that works on a phone or tablet.
+                    function siblingsOf(el) {
+                        return Array.prototype.slice.call(el.parentNode.children).filter(function (c) {
+                            return c.classList && (c.classList.contains('epRowWrap') || c.classList.contains('epGroupSection'));
+                        });
+                    }
+
+                    function moveRow(wrap, dir) {
+                        var body = wrap.parentNode;
+                        var sibs = siblingsOf(wrap);
+                        var idx = sibs.indexOf(wrap);
+                        var neighbour = sibs[idx + dir];
+                        var inGroup = body.classList.contains('epSectionBody') && !body.classList.contains('epTopBody');
+
+                        if (!neighbour) {
+                            if (!inGroup) { return false; }
+                            // At the edge of a group: step out, just before/after the group itself.
+                            var sec = body.parentNode;
+                            if (dir < 0) { sec.parentNode.insertBefore(wrap, sec); }
+                            else { sec.parentNode.insertBefore(wrap, sec.nextSibling); }
+                            return true;
+                        }
+
+                        if (neighbour.classList.contains('epGroupSection')) {
+                            // Step into the neighbouring group, at the end when moving up and at the
+                            // start when moving down, so repeated presses keep walking the same way.
+                            var target = neighbour.querySelector('.epSectionBody');
+                            if (!target) { return false; }
+                            var rows = Array.prototype.slice.call(target.children).filter(function (c) {
+                                return c.classList && c.classList.contains('epRowWrap');
+                            });
+                            if (dir < 0) { target.appendChild(wrap); }
+                            else if (rows.length) { target.insertBefore(wrap, rows[0]); }
+                            else { target.appendChild(wrap); }
+                            return true;
+                        }
+
+                        if (dir < 0) { body.insertBefore(wrap, neighbour); }
+                        else { body.insertBefore(neighbour, wrap); }
+                        return true;
+                    }
+
+                    function moveSection(sec, dir) {
+                        var sibs = siblingsOf(sec);
+                        var idx = sibs.indexOf(sec);
+                        var neighbour = sibs[idx + dir];
+                        if (!neighbour) { return false; }
+                        if (dir < 0) { sec.parentNode.insertBefore(sec, neighbour); }
+                        else { sec.parentNode.insertBefore(neighbour, sec); }
+                        return true;
+                    }
+
+                    // --- wiring ----------------------------------------------------------------
+
                     // All wire* helpers are re-run over the whole list after DOM changes; the
                     // data-wired guard keeps that idempotent (no duplicate listeners).
                     function wireRows(list) {
@@ -350,13 +653,8 @@
                             });
                             row.addEventListener('dragend', function () {
                                 row.classList.remove('epDragging');
-                                // Dropped into a section (ungrouped or a group)? If it was an "extra"
-                                // that is still off, turn it on — being placed there means "use it".
-                                if (wrap.closest('.epSectionBody') && row.getAttribute('data-inmenu') === '0') {
-                                    var vis = row.querySelector('.epVis');
-                                    if (vis && !vis.checked) { vis.checked = true; row.classList.remove('epHidden'); }
-                                }
-                                dragged = null; clearDragOver(); refreshPlaceholders(); scheduleSave();
+                                afterMove(row);
+                                dragged = null; clearDragOver();
                             });
                             row.querySelector('.epVis').addEventListener('change', function (e) {
                                 row.classList.toggle('epHidden', !e.target.checked);
@@ -365,7 +663,28 @@
                             row.querySelector('.epArrow').addEventListener('click', function () {
                                 toggleEmbed(wrap, row, row.querySelector('.epArrow'));
                             });
+                            row.querySelector('.epNameInput').addEventListener('input', scheduleSave);
+                            wrap.querySelectorAll('.epMoveBtn').forEach(function (btn) {
+                                if (btn.classList.contains('epSecMove')) { return; }
+                                btn.addEventListener('click', function () {
+                                    if (moveRow(wrap, Number(btn.getAttribute('data-dir')))) {
+                                        afterMove(row);
+                                        btn.focus();
+                                    }
+                                });
+                            });
                         });
+                    }
+
+                    // Landing a row in a real section means "use this plugin", so an extra that is
+                    // still switched off gets switched on.
+                    function afterMove(row) {
+                        if (row.closest('.epSectionBody') && row.getAttribute('data-inmenu') === '0') {
+                            var vis = row.querySelector('.epVis');
+                            if (vis && !vis.checked) { vis.checked = true; row.classList.remove('epHidden'); }
+                        }
+                        refreshPlaceholders();
+                        scheduleSave();
                     }
 
                     // Section bodies (the top-level list + each group) are drop targets; dragging a
@@ -404,6 +723,8 @@
                             sec.setAttribute('data-wired', '1');
                             var input = sec.querySelector('.epGroupNameInput');
                             if (input) { input.addEventListener('input', scheduleSave); }
+                            var icon = sec.querySelector('.epIconInput');
+                            if (icon) { icon.addEventListener('input', scheduleSave); }
                             var caret = sec.querySelector('.epGroupCaret2');
                             if (caret) { caret.addEventListener('click', function () { sec.classList.toggle('epCollapsed'); }); }
                             var grip = sec.querySelector('.epSecGrip');
@@ -420,6 +741,14 @@
                                     draggedSec = null; clearDragOver(); scheduleSave();
                                 });
                             }
+                            sec.querySelectorAll('.epSecMove').forEach(function (btn) {
+                                btn.addEventListener('click', function () {
+                                    if (moveSection(sec, Number(btn.getAttribute('data-dir')))) {
+                                        btn.focus();
+                                        scheduleSave();
+                                    }
+                                });
+                            });
                             var del = sec.querySelector('.epGroupDel');
                             if (del) {
                                 del.addEventListener('click', function () {
@@ -451,7 +780,7 @@
                         var topBody = list.querySelector('.epTopBody');
                         if (!topBody) { return; }
                         var tmp = document.createElement('div');
-                        tmp.innerHTML = groupHtml(newGroupId(), 'New group', [], [], []);
+                        tmp.innerHTML = groupHtml(newGroupId(), 'New group', '', [], normalizeLayout({}));
                         var sec = tmp.firstChild;
                         topBody.appendChild(sec);
                         wireSections(list); wireGroupControls(list);
@@ -492,47 +821,120 @@
                         }
                     }
 
+                    // --- saving ----------------------------------------------------------------
+
                     function scheduleSave() {
                         if (saveTimer) { clearTimeout(saveTimer); }
                         setStatus('Saving…');
                         saveTimer = setTimeout(save, 400);
                     }
 
-                    function save() {
-                        ApiClient.getPluginConfiguration(pluginId).then(function (cfg) {
-                            var rows = Array.prototype.slice.call(page.querySelectorAll('.epRow'));
-                            cfg.Enabled = page.querySelector('#epEnabled').checked;
-                            // Order is one top-to-bottom sequence in document order: plugin names,
-                            // plus a "group:<id>" token where each group section sits (the token
-                            // precedes the group's member rows). The sidebar script and render()
-                            // use the tokens to place whole groups; name lookups just skip them.
-                            cfg.Order = Array.prototype.map.call(
-                                page.querySelectorAll('#epList .epRow, #epList .epGroupSection'),
-                                function (el) {
-                                    return el.classList.contains('epGroupSection')
-                                        ? 'group:' + el.getAttribute('data-group-id')
-                                        : el.getAttribute('data-name');
-                                });
-                            cfg.Hidden = rows.filter(function (r) {
-                                return r.getAttribute('data-inmenu') === '1' && !r.querySelector('.epVis').checked;
-                            }).map(function (r) { return r.getAttribute('data-name'); });
-                            cfg.Added = rows.filter(function (r) {
-                                return r.getAttribute('data-inmenu') === '0' && r.querySelector('.epVis').checked;
-                            }).map(function (r) { return { Name: r.getAttribute('data-name'), DisplayName: r.getAttribute('data-display') }; });
-                            // Rebuild groups from the DOM sections (single source of truth). Empty
-                            // groups are kept so the user can still drag into them.
-                            cfg.Groups = Array.prototype.map.call(page.querySelectorAll('.epGroupSection'), function (sec) {
-                                var nameInput = sec.querySelector('.epGroupNameInput');
-                                var members = Array.prototype.map.call(sec.querySelectorAll('.epSectionBody .epRow'), function (r) {
-                                    return r.getAttribute('data-name');
-                                });
-                                return {
-                                    Id: sec.getAttribute('data-group-id'),
-                                    Name: (nameInput && nameInput.value) ? nameInput.value : 'Group',
-                                    Members: members
-                                };
+                    // Read the edited layout straight back out of the DOM — the rendered tree is the
+                    // single source of truth, so nothing can drift out of sync with what is shown.
+                    function collectLayout() {
+                        var rows = Array.prototype.slice.call(page.querySelectorAll('#epList .epRow'));
+                        var layout = {};
+
+                        // Order is one top-to-bottom sequence in document order: plugin names, plus
+                        // a "group:<id>" token where each group section sits (the token precedes the
+                        // group's member rows). The sidebar script and render() use the tokens to
+                        // place whole groups; name lookups just skip them.
+                        layout.Order = Array.prototype.map.call(
+                            page.querySelectorAll('#epList .epRow, #epList .epGroupSection'),
+                            function (el) {
+                                return el.classList.contains('epGroupSection')
+                                    ? 'group:' + el.getAttribute('data-group-id')
+                                    : el.getAttribute('data-name');
                             });
-                            ApiClient.updatePluginConfiguration(pluginId, cfg).then(function () {
+
+                        layout.Hidden = rows.filter(function (r) {
+                            return r.getAttribute('data-inmenu') === '1' && !r.querySelector('.epVis').checked;
+                        }).map(function (r) { return r.getAttribute('data-name'); });
+
+                        layout.Added = rows.filter(function (r) {
+                            return r.getAttribute('data-inmenu') === '0' && r.querySelector('.epVis').checked;
+                        }).map(function (r) {
+                            return { Name: r.getAttribute('data-name'), DisplayName: labelOf(r) };
+                        });
+
+                        // A rename is only stored when the label actually differs from the plugin's
+                        // own; clearing the field back to the original drops it again.
+                        layout.Renames = rows.filter(function (r) {
+                            if (r.getAttribute('data-inmenu') !== '1') { return false; }
+                            var v = labelOf(r);
+                            return v && v !== r.getAttribute('data-display');
+                        }).map(function (r) {
+                            return { Name: r.getAttribute('data-name'), DisplayName: labelOf(r) };
+                        });
+
+                        layout.Groups = Array.prototype.map.call(page.querySelectorAll('#epList .epGroupSection'), function (sec) {
+                            var nameInput = sec.querySelector('.epGroupNameInput');
+                            var iconInput = sec.querySelector('.epIconInput');
+                            var members = Array.prototype.map.call(sec.querySelectorAll('.epSectionBody .epRow'), function (r) {
+                                return r.getAttribute('data-name');
+                            });
+                            return {
+                                Id: sec.getAttribute('data-group-id'),
+                                Name: (nameInput && nameInput.value) ? nameInput.value : 'Group',
+                                Icon: (iconInput && iconInput.value) ? iconInput.value.trim() : '',
+                                Members: members
+                            };
+                        });
+
+                        // Null (not an empty array) when the drawer isn't on the page at all, so a
+                        // save from a context without it cannot wipe stored section overrides.
+                        var navSecs = page.querySelectorAll('#epNav .epNavSec');
+                        layout.Sections = navSecs.length
+                            ? Array.prototype.map.call(navSecs, function (sec) {
+                                var entries = Array.prototype.slice.call(sec.querySelectorAll('.epSecRow'));
+                                return {
+                                    Id: sec.getAttribute('data-section-id'),
+                                    Hidden: entries.filter(function (r) { return !r.querySelector('.epVis').checked; })
+                                        .map(function (r) { return r.getAttribute('data-href'); }),
+                                    Order: entries.map(function (r) { return r.getAttribute('data-href'); })
+                                };
+                            })
+                            : null;
+
+                        return layout;
+                    }
+
+                    function labelOf(row) {
+                        var input = row.querySelector('.epNameInput');
+                        return input ? String(input.value || '').trim() : '';
+                    }
+
+                    function save() {
+                        return ApiClient.getPluginConfiguration(pluginId).then(function (cfg) {
+                            cfg.Enabled = page.querySelector('#epEnabled').checked;
+                            cfg.ShowSearch = page.querySelector('#epShowSearch').checked;
+                            cfg.PerUser = page.querySelector('#epPerUser').checked;
+
+                            var layout = collectLayout();
+                            if (scope === 'user' && cfg.PerUser && userId) {
+                                var mine = (cfg.Users || []).filter(function (u) {
+                                    return String(prop(u, 'UserId', 'userId') || '').toLowerCase() === String(userId).toLowerCase();
+                                })[0];
+                                var users = (cfg.Users || []).filter(function (u) {
+                                    return String(prop(u, 'UserId', 'userId') || '').toLowerCase() !== String(userId).toLowerCase();
+                                });
+                                users.push({
+                                    UserId: userId,
+                                    Hidden: layout.Hidden, Order: layout.Order, Added: layout.Added,
+                                    Groups: layout.Groups, Renames: layout.Renames,
+                                    Sections: layout.Sections != null ? layout.Sections : (prop(mine, 'Sections', 'sections') || [])
+                                });
+                                cfg.Users = users;
+                            } else {
+                                cfg.Hidden = layout.Hidden;
+                                cfg.Order = layout.Order;
+                                cfg.Added = layout.Added;
+                                cfg.Groups = layout.Groups;
+                                cfg.Renames = layout.Renames;
+                                if (layout.Sections != null) { cfg.Sections = layout.Sections; }
+                            }
+
+                            return ApiClient.updatePluginConfiguration(pluginId, cfg).then(function () {
                                 setStatus('Saved');
                                 // Tell the injected sidebar script (same window) to re-fetch + re-apply
                                 // now, so the change shows in the sidebar without a page reload.
@@ -541,24 +943,115 @@
                         });
                     }
 
+                    // --- import / export -------------------------------------------------------
+
+                    function exportConfig() {
+                        ApiClient.getPluginConfiguration(pluginId).then(function (cfg) {
+                            var blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
+                            var url = URL.createObjectURL(blob);
+                            var a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'easy-plugin-config.json';
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            setTimeout(function () { URL.revokeObjectURL(url); }, 0);
+                            setStatus('Exported');
+                        });
+                    }
+
+                    function importConfig(file) {
+                        if (!file) { return; }
+                        var reader = new FileReader();
+                        reader.onload = function () {
+                            var incoming;
+                            try { incoming = JSON.parse(String(reader.result)); } catch (e) { incoming = null; }
+                            if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
+                                setStatus('Import failed: not a configuration file');
+                                return;
+                            }
+                            ApiClient.getPluginConfiguration(pluginId).then(function (cfg) {
+                                // Copy only the fields we own, so an old or hand-edited file cannot
+                                // introduce unknown properties.
+                                ['Enabled', 'PerUser', 'ShowSearch', 'Hidden', 'Order', 'Added',
+                                 'Groups', 'Renames', 'Sections', 'Users', 'CollapseStates']
+                                    .forEach(function (k) {
+                                        if (incoming[k] !== undefined) { cfg[k] = incoming[k]; }
+                                    });
+                                return ApiClient.updatePluginConfiguration(pluginId, cfg).then(function () {
+                                    setStatus('Imported');
+                                    try { window.dispatchEvent(new CustomEvent('easyplugin-config-changed')); } catch (e) { /* ignore */ }
+                                    load();
+                                });
+                            });
+                        };
+                        reader.readAsText(file);
+                    }
+
+                    // --- boot ------------------------------------------------------------------
+
+                    function applyScopeVisibility(cfg) {
+                        var wrap = page.querySelector('#epScopeWrap');
+                        wrap.style.display = cfg.PerUser ? '' : 'none';
+                        if (!cfg.PerUser) { scope = 'default'; }
+                        page.querySelector('#epScope').value = scope;
+                    }
+
                     function load() {
                         Dashboard.showLoadingMsg();
                         Promise.all([getConfigPages(), ApiClient.getPluginConfiguration(pluginId)])
                             .then(function (res) {
                                 var pages = res[0] || [];
                                 var cfg = res[1] || {};
+                                try {
+                                    userId = ApiClient.getCurrentUserId ? ApiClient.getCurrentUserId() : null;
+                                } catch (e) { userId = null; }
+
                                 page.querySelector('#epEnabled').checked = cfg.Enabled !== false;
+                                page.querySelector('#epShowSearch').checked = cfg.ShowSearch === true;
+                                page.querySelector('#epPerUser').checked = cfg.PerUser === true;
+                                // Start on your own layout when there is one, but never fight an
+                                // explicit pick from the scope selector on later reloads.
+                                if (!scopePicked) {
+                                    scope = (cfg.PerUser && userId) ? 'user' : 'default';
+                                    scopePicked = true;
+                                }
+                                applyScopeVisibility(cfg);
+
                                 var warn = page.querySelector('#epWarn');
                                 if (!pages.length) { warn.style.display = ''; warn.textContent = 'Could not load the list of plugin pages from the server.'; }
                                 else { warn.style.display = 'none'; }
+
                                 render(pages, cfg);
+                                renderNav(cfg);
                                 Dashboard.hideLoadingMsg();
                             })
                             .catch(function () { Dashboard.hideLoadingMsg(); });
                     }
 
                     page.querySelector('#epEnabled').addEventListener('change', scheduleSave);
+                    page.querySelector('#epShowSearch').addEventListener('change', scheduleSave);
+                    page.querySelector('#epPerUser').addEventListener('change', function (e) {
+                        scope = e.target.checked ? 'user' : 'default';
+                        // Save first so the new scope is stored, then re-read for the other layout.
+                        save().then(load);
+                    });
+                    page.querySelector('#epScope').addEventListener('change', function (e) {
+                        scope = e.target.value;
+                        load();
+                    });
                     page.querySelector('#epNewGroup').addEventListener('click', addGroup);
+                    page.querySelector('#epExport').addEventListener('click', exportConfig);
+                    page.querySelector('#epImport').addEventListener('click', function () {
+                        page.querySelector('#epImportFile').click();
+                    });
+                    page.querySelector('#epImportFile').addEventListener('change', function (e) {
+                        importConfig(e.target.files && e.target.files[0]);
+                        e.target.value = '';
+                    });
+                    page.querySelector('#epNavHeadToggle').addEventListener('click', function () {
+                        page.querySelector('#epNavCard').classList.toggle('epCollapsed');
+                    });
                     page.addEventListener('pageshow', load);
                     load();
                 })();

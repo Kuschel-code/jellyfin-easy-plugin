@@ -1,7 +1,7 @@
 ---
 name: "Easy Plugin"
 guid: "f4acffe0-0347-4b20-a69d-d50d6b2b4a7e"
-version: "0.0.6.0"
+version: "0.0.7.0"
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 owner: "Kuschel-code"
@@ -15,6 +15,17 @@ category: "General"
 artifacts:
   - "Jellyfin.Plugin.EasyPlugin.dll"
 changelog: >
+  0.0.7.0 - Rename any sidebar entry, give groups a Material icon, and optionally
+  show a filter box above the plugin list. The other sidebar sections (Server,
+  Devices, Live TV, ...) can now be hidden and reordered too. Each user can have
+  their own layout, and the collapse state of a group is remembered server-side so
+  it follows you across browsers. Entries and whole groups can be moved with
+  up/down buttons, which finally makes the settings page usable on touch devices
+  and by keyboard. Config import/export as JSON. The layout endpoint now requires
+  a signed-in caller instead of being public. Fixes: a group whose plugins were all
+  hidden left an empty header in the sidebar, and the injected stylesheet was being
+  rewritten in a loop.
+
   0.0.6.0 - Movable groups: drag a group's title-bar handle to place the whole
   group anywhere in the list; groups and ungrouped plugins now share one order,
   mirrored 1:1 by the sidebar (previously groups were stuck below all ungrouped
