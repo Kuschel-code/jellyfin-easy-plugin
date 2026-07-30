@@ -21,10 +21,14 @@ namespace Jellyfin.Plugin.EasyPlugin.Api;
 [Route("EasyPlugin")]
 public class EasyPluginController : ControllerBase
 {
-    // Policy names registered by the server. Referenced as literals so the plugin does not have to
-    // take a dependency on the Jellyfin.Api assembly.
-    private const string RequiresElevation = "RequiresElevation";
-    private const string DefaultAuthorization = "DefaultAuthorization";
+    // These endpoints use a plain [Authorize] rather than one of Jellyfin's named policies
+    // ("RequiresElevation" and friends). Those names live in the server's Jellyfin.Api assembly,
+    // which plugins do not reference, so naming one here would be an unverifiable string: get it
+    // wrong and ASP.NET Core throws "policy not found" at request time, taking the sidebar down
+    // with it. A bare [Authorize] only asks for an authenticated caller, which is the whole point
+    // — stopping anonymous enumeration — and cannot fail that way. Neither endpoint needs more:
+    // the layout is what the caller would see anyway, and a write only ever touches the caller's
+    // own collapse record.
 
     /// <summary>Serves the embedded client script.</summary>
     /// <returns>The JavaScript file, or 404 if the resource is missing.</returns>
@@ -46,7 +50,7 @@ public class EasyPluginController : ControllerBase
     /// <summary>Returns the layout the calling user should see.</summary>
     /// <returns>The enabled flag and this user's effective layout.</returns>
     [HttpGet("Config")]
-    [Authorize(Policy = DefaultAuthorization)]
+    [Authorize]
     [Produces("application/json")]
     public ActionResult GetConfig()
     {
@@ -74,7 +78,7 @@ public class EasyPluginController : ControllerBase
     /// <param name="request">The group and its new state.</param>
     /// <returns>204 on success, 400 when the group is missing.</returns>
     [HttpPost("Collapse")]
-    [Authorize(Policy = RequiresElevation)]
+    [Authorize]
     public ActionResult SetCollapsed([FromBody] CollapseRequest request)
     {
         if (request is null || string.IsNullOrEmpty(request.GroupId))

@@ -38,6 +38,12 @@ public static class LayoutResolver
     /// Collapses or expands one group for one user, returning the updated collapse store. The
     /// user's entry is created on first use and dropped again once nothing is collapsed, so the
     /// configuration does not accumulate empty records.
+    /// <para>
+    /// Collapsing is only accepted for a group that actually exists. The endpoint behind this is
+    /// reachable by any signed-in user, and without the check they could grow their own record
+    /// without limit by posting made-up ids. Expanding is always allowed, so ids left behind by a
+    /// deleted group can still be cleared.
+    /// </para>
     /// </summary>
     /// <param name="config">The plugin configuration.</param>
     /// <param name="userId">The user whose state changes.</param>
@@ -58,6 +64,11 @@ public static class LayoutResolver
             return states;
         }
 
+        if (collapsed && !GroupExists(config, groupId))
+        {
+            return states;
+        }
+
         var current = FindCollapsed(config, userId);
         var updated = collapsed
             ? (current.Contains(groupId, StringComparer.Ordinal) ? current : current.Append(groupId).ToArray())
@@ -67,6 +78,18 @@ public static class LayoutResolver
         return updated.Length == 0
             ? others.ToArray()
             : others.Append(new UserCollapseState { UserId = userId, Collapsed = updated }).ToArray();
+    }
+
+    // A group counts as real if it is in the server default or in any user's layout — collapse
+    // state is personal, but the group it points at may come from either.
+    private static bool GroupExists(PluginConfiguration config, string groupId)
+    {
+        var inDefault = (config.Groups ?? Array.Empty<PluginGroup>())
+            .Any(g => g is not null && string.Equals(g.Id, groupId, StringComparison.Ordinal));
+
+        return inDefault || (config.Users ?? Array.Empty<UserLayout>())
+            .Any(u => (u?.Groups ?? Array.Empty<PluginGroup>())
+                .Any(g => g is not null && string.Equals(g.Id, groupId, StringComparison.Ordinal)));
     }
 
     private static UserLayout? FindUser(PluginConfiguration config, string? userId)

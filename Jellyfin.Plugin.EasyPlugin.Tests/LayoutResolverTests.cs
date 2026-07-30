@@ -123,6 +123,48 @@ public class LayoutResolverTests
     }
 
     [Fact]
+    public void SetCollapsed_IgnoresAGroupThatDoesNotExist()
+    {
+        // Any signed-in user can reach the collapse endpoint, so made-up ids must not be able to
+        // grow the stored configuration.
+        var c = Config();
+
+        var result = LayoutResolver.SetCollapsed(c, UserA, "not-a-group", true);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void SetCollapsed_StillClearsAStaleIdAfterItsGroupIsDeleted()
+    {
+        var c = Config();
+        c.CollapseStates = new[] { new UserCollapseState { UserId = UserA, Collapsed = new[] { "gone" } } };
+
+        c.CollapseStates = LayoutResolver.SetCollapsed(c, UserA, "gone", false);
+
+        Assert.Empty(LayoutResolver.Resolve(c, UserA).Collapsed);
+    }
+
+    [Fact]
+    public void SetCollapsed_AcceptsAGroupThatOnlyExistsInAUserLayout()
+    {
+        var c = Config();
+        c.PerUser = true;
+        c.Users = new[]
+        {
+            new UserLayout
+            {
+                UserId = UserA,
+                Groups = new[] { new PluginGroup { Id = "mine", Name = "Mine", Members = new[] { "A" } } }
+            }
+        };
+
+        c.CollapseStates = LayoutResolver.SetCollapsed(c, UserA, "mine", true);
+
+        Assert.Equal(new[] { "mine" }, LayoutResolver.Resolve(c, UserA).Collapsed);
+    }
+
+    [Fact]
     public void SetCollapsed_WithoutUser_LeavesStoreUnchanged()
     {
         var c = Config();
