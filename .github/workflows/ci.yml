@@ -25,3 +25,25 @@ jobs:
 
       - name: Test
         run: dotnet test --no-build -c Release --verbosity normal
+
+  # The sidebar logic lives in client.js and the configuration page, so the .NET tests above cover
+  # almost none of it. These run both against jsdom, in source and minified-build form.
+  web-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: web-tests/package-lock.json
+
+      - name: Install
+        run: npm ci
+        working-directory: web-tests
+
+      - name: Test
+        run: npm test
+        working-directory: web-tests

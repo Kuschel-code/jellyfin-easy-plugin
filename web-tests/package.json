@@ -1,0 +1,12 @@
+{
+  "name": "easy-plugin-web-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "jsdom tests for the browser-side parts of Easy Plugin (client.js and the configuration page).",
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.1"
+  }
+}

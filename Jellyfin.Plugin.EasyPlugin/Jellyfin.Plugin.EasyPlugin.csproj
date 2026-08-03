@@ -9,8 +9,8 @@
     <LangVersion>latest</LangVersion>
     <RootNamespace>Jellyfin.Plugin.EasyPlugin</RootNamespace>
     <AssemblyName>Jellyfin.Plugin.EasyPlugin</AssemblyName>
-    <AssemblyVersion>0.0.6.0</AssemblyVersion>
-    <FileVersion>0.0.6.0</FileVersion>
+    <AssemblyVersion>0.0.7.0</AssemblyVersion>
+    <FileVersion>0.0.7.0</FileVersion>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
@@ -25,10 +25,48 @@
 
   <!--
     The embedded web resources are minified at build time (comments + leading whitespace + blank
-    lines stripped) and embedded under their original logical names. This keeps the source files
-    readable while shrinking the DLL — important because one target server's storage corrupts this
-    plugin's DLL on write at file offset 0xB000, so the DLL must stay below ~44 KB.
+    lines stripped) and embedded under their original logical names, keeping the source files
+    readable while shrinking the DLL.
+
+    Size history: minification was originally added because one target server was reported to
+    corrupt this plugin's DLL on write at file offset 0xB000 (45,056 bytes), which put the DLL
+    under an advisory ~44 KB budget. That budget has not held — the assembly passed it during
+    0.0.5 and every release since has shipped over it, apparently without anyone hitting the
+    reported corruption. Rather than leave a stale claim in a comment, the build now reports the
+    size on every run and warns when it is over EpMaxDllBytes, so growth is a visible decision
+    instead of a silent one. Raise the budget if the corruption report turns out to be obsolete;
+    if it is real, the resources need compressing (they are the bulk of the assembly).
   -->
+  <PropertyGroup>
+    <EpMaxDllBytes>45056</EpMaxDllBytes>
+  </PropertyGroup>
+
+  <UsingTask TaskName="EpCheckSize" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <DllPath ParameterType="System.String" Required="true" />
+      <LimitBytes ParameterType="System.Int32" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        var info = new System.IO.FileInfo(DllPath);
+        var name = System.IO.Path.GetFileName(DllPath);
+        var text = string.Format("Easy Plugin: {0} is {1:N0} bytes (budget {2:N0}).", name, info.Length, LimitBytes);
+        if (info.Length > LimitBytes)
+        {
+            Log.LogWarning(text + " Over the advisory size budget — see the note in the .csproj before shipping.");
+        }
+        else
+        {
+            Log.LogMessage(MessageImportance.High, text);
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="EpReportDllSize" AfterTargets="Build" Condition="Exists('$(TargetPath)')">
+    <EpCheckSize DllPath="$(TargetPath)" LimitBytes="$(EpMaxDllBytes)" />
+  </Target>
+
   <UsingTask TaskName="EpMinify" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
     <ParameterGroup>
       <Source ParameterType="System.String" Required="true" />

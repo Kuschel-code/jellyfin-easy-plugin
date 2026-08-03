@@ -20,3 +20,6 @@ coverage*.xml
 ## OS
 Thumbs.db
 .DS_Store
+
+## Node (web-tests)
+node_modules/
