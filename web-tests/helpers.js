@@ -185,7 +185,10 @@ async function bootConfigPage(opts) {
         beforeParse(window) {
             window.ApiClient = {
                 getUrl: (p) => p,
-                getJSON: () => Promise.resolve(o.pages || []),
+                getJSON: () =>
+                    o.pagesFail
+                        ? Promise.reject(new Error('ConfigurationPages unavailable'))
+                        : Promise.resolve(o.pages || []),
                 getCurrentUserId: () => o.userId || null,
                 getPluginConfiguration: () => Promise.resolve(JSON.parse(JSON.stringify(stored))),
                 updatePluginConfiguration: (id, c) => {

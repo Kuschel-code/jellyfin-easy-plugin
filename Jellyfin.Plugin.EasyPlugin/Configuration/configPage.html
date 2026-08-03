@@ -210,6 +210,15 @@
                                                  // reloading never overrides an explicit choice
                     var userId = null;           // the signed-in user, for per-user layouts
 
+                    // The saved layout is rebuilt from the rendered rows, so anything the editor
+                    // could not draw would silently disappear on the next save. These three keep
+                    // that from happening: layoutReady gates saving the layout at all, and
+                    // storedLayout/knownNames let a partial page list be merged rather than
+                    // replace what is on the server.
+                    var layoutReady = false;     // a real page list has been rendered
+                    var storedLayout = null;     // the layout as it came from the server
+                    var knownNames = null;       // { pageName: true } for every row we rendered
+
                     function esc(s) {
                         return String(s == null ? '' : s)
                             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -234,9 +243,14 @@
                         return o[a] != null ? o[a] : o[b];
                     }
 
+                    // Returns null when the list could not be fetched. That is deliberately
+                    // different from an empty list: the saved layout is rebuilt from the rendered
+                    // rows, so "no pages" and "could not ask" must never be confused — treating a
+                    // failed request as "no plugins" is what used to wipe people's layouts.
                     function getConfigPages() {
                         return ApiClient.getJSON(ApiClient.getUrl('web/ConfigurationPages'))
-                            .catch(function () { return []; });
+                            .then(function (r) { return Array.isArray(r) ? r : null; })
+                            .catch(function () { return null; });
                     }
 
                     function setStatus(text) {
@@ -359,6 +373,7 @@
                         });
 
                         var L = normalizeLayout(layoutOf(cfg));
+                        storedLayout = L;
                         var addedNames = L.added.map(function (a) { return a.name; });
                         var order = L.order.length ? L.order : pages.map(pageName);
 
@@ -369,7 +384,14 @@
                         });
 
                         var list = page.querySelector('#epList');
-                        if (!sorted.length) { list.innerHTML = '<div class="epEmpty">No plugin pages found.</div>'; return; }
+                        if (!sorted.length) {
+                            // Nothing to show. Leave layoutReady false so the toggles at the top of
+                            // the page stay usable without a save flattening the stored layout.
+                            layoutReady = false;
+                            knownNames = null;
+                            list.innerHTML = '<div class="epEmpty">No plugin pages found.</div>';
+                            return;
+                        }
 
                         // ONE row per plugin: collapse a plugin's multiple config pages to one
                         // representative (prefer its menu page, else the first).
@@ -451,6 +473,12 @@
                         wireSections(list);
                         wireGroupControls(list);
                         wireAddGroup(list);
+
+                        // Record what actually made it onto the page. Anything the server knows
+                        // about but that is missing here gets carried over untouched on save.
+                        knownNames = {};
+                        repr.forEach(function (p) { knownNames[pageName(p)] = true; });
+                        layoutReady = true;
                     }
 
                     // --- the other sidebar sections --------------------------------------------
@@ -896,6 +924,63 @@
                             })
                             : null;
 
+                        return mergeUnrendered(layout);
+                    }
+
+                    // Carry over everything the editor could not draw this time.
+                    //
+                    // /web/ConfigurationPages does not always come back complete — a plugin that is
+                    // still starting, mid-update or briefly erroring simply is not in the list. Since
+                    // the layout above is rebuilt purely from rendered rows, those plugins would be
+                    // dropped from Hidden/Added/Renames/Order and from their groups the next time
+                    // anything saved, and the user would have to set them all up again. So any stored
+                    // entry whose plugin is not on the page right now is preserved as-is.
+                    function mergeUnrendered(layout) {
+                        var S = storedLayout;
+                        if (!S || !knownNames) { return layout; }
+                        var known = knownNames;
+                        function missing(name) { return name && !known[name]; }
+
+                        layout.Hidden = layout.Hidden.concat(
+                            S.hidden.filter(missing));
+
+                        layout.Added = layout.Added.concat(
+                            S.added.filter(function (a) { return missing(a.name); })
+                                .map(function (a) { return { Name: a.name, DisplayName: a.display }; }));
+
+                        layout.Renames = layout.Renames.concat(
+                            S.renames.filter(function (r) { return missing(r.name); })
+                                .map(function (r) { return { Name: r.name, DisplayName: r.display }; }));
+
+                        // Put absent plugins back into the group they belonged to, at the end.
+                        var keepByGroup = {};
+                        S.groups.forEach(function (g) {
+                            var kept = (g.members || []).filter(missing);
+                            if (kept.length) { keepByGroup[g.id] = kept; }
+                        });
+                        // Only groups still on the page get their absent members back. render()
+                        // draws every stored group, empty ones included, so a group that is not in
+                        // the DOM was deleted by the user — restoring it here would undo that.
+                        layout.Groups.forEach(function (g) {
+                            var kept = keepByGroup[g.Id];
+                            if (kept) { g.Members = g.Members.concat(kept); }
+                        });
+
+                        // Positions of absent entries cannot be known, so append rather than guess.
+                        // A group token only comes back if that group still exists after merging —
+                        // otherwise deleting a group would be undone by its own leftover token.
+                        var liveGroup = {};
+                        layout.Groups.forEach(function (g) { liveGroup[g.Id] = true; });
+                        var seen = {};
+                        layout.Order.forEach(function (t) { seen[t] = true; });
+                        S.order.forEach(function (t) {
+                            if (!t || seen[t]) { return; }
+                            var keep = t.indexOf('group:') === 0
+                                ? liveGroup[t.slice(6)]
+                                : missing(t);
+                            if (keep) { seen[t] = true; layout.Order.push(t); }
+                        });
+
                         return layout;
                     }
 
@@ -909,6 +994,18 @@
                             cfg.Enabled = page.querySelector('#epEnabled').checked;
                             cfg.ShowSearch = page.querySelector('#epShowSearch').checked;
                             cfg.PerUser = page.querySelector('#epPerUser').checked;
+
+                            // The switches above are always safe to persist. The layout is not: if
+                            // the plugin list never rendered there are no rows to read it back
+                            // from, and writing it anyway would store an empty layout over a good
+                            // one — which is exactly how a restart or a failed request used to cost
+                            // people their whole sidebar setup.
+                            if (!layoutReady) {
+                                return ApiClient.updatePluginConfiguration(pluginId, cfg).then(function () {
+                                    setStatus('Saved (layout left untouched)');
+                                    try { window.dispatchEvent(new CustomEvent('easyplugin-config-changed')); } catch (e) { /* ignore */ }
+                                });
+                            }
 
                             var layout = collectLayout();
                             if (scope === 'user' && cfg.PerUser && userId) {
@@ -1001,6 +1098,7 @@
                         Dashboard.showLoadingMsg();
                         Promise.all([getConfigPages(), ApiClient.getPluginConfiguration(pluginId)])
                             .then(function (res) {
+                                var pagesFailed = res[0] === null;   // null = request failed, [] = really none
                                 var pages = res[0] || [];
                                 var cfg = res[1] || {};
                                 try {
@@ -1019,8 +1117,14 @@
                                 applyScopeVisibility(cfg);
 
                                 var warn = page.querySelector('#epWarn');
-                                if (!pages.length) { warn.style.display = ''; warn.textContent = 'Could not load the list of plugin pages from the server.'; }
-                                else { warn.style.display = 'none'; }
+                                if (pagesFailed || !pages.length) {
+                                    warn.style.display = '';
+                                    warn.textContent = pagesFailed
+                                        ? 'Could not load the list of plugin pages from the server. Your saved layout is untouched — reload this page once the server has finished starting.'
+                                        : 'The server reported no plugin pages. Your saved layout is untouched.';
+                                } else {
+                                    warn.style.display = 'none';
+                                }
 
                                 render(pages, cfg);
                                 renderNav(cfg);
