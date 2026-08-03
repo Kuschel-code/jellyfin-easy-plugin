@@ -1,7 +1,7 @@
 ---
 name: "Easy Plugin"
 guid: "f4acffe0-0347-4b20-a69d-d50d6b2b4a7e"
-version: "0.0.7.0"
+version: "0.0.8.0"
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 owner: "Kuschel-code"
@@ -15,6 +15,14 @@ category: "General"
 artifacts:
   - "Jellyfin.Plugin.EasyPlugin.dll"
 changelog: >
+  0.0.8.0 - Fixes losing your whole sidebar setup. The settings page rebuilds the
+  saved layout from the rows it has drawn, but it treated "could not fetch the
+  plugin list" as "there are no plugins" - so right after updating the plugin,
+  while the server was still coming up, touching any switch saved an empty layout
+  over the real one. The layout is now only written when a plugin list actually
+  rendered, and plugins missing from a partial list keep their hidden/added/renamed
+  state and their group instead of being dropped.
+
   0.0.7.0 - Rename any sidebar entry, give groups a Material icon, and optionally
   show a filter box above the plugin list. The other sidebar sections (Server,
   Devices, Live TV, ...) can now be hidden and reordered too. Each user can have
