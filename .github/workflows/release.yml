@@ -12,6 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The manifest step commits to main, which needs real history to push.
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -22,12 +25,18 @@ jobs:
         run: dotnet build Jellyfin.Plugin.EasyPlugin/Jellyfin.Plugin.EasyPlugin.csproj -c Release
 
       - name: Package plugin
+        env:
+          TZ: UTC
         run: |
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
           GUID="f4acffe0-0347-4b20-a69d-d50d6b2b4a7e"
-          TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           DLL="Jellyfin.Plugin.EasyPlugin/bin/Release/net9.0/Jellyfin.Plugin.EasyPlugin.dll"
+
+          # Stamp from the tagged commit, not from "now". Wall-clock time made every
+          # re-run produce a different zip, and therefore a different checksum, which
+          # silently invalidated the manifest entry of an already-published version.
+          TS="$(git show -s --format=%cd --date=format-local:%Y-%m-%dT%H:%M:%SZ "$GITHUB_SHA")"
 
           mkdir -p package
           cp "$DLL" package/
@@ -37,13 +46,24 @@ jobs:
 
           cd package
           ZIP="easy-plugin_${VERSION}.zip"
-          zip "$ZIP" Jellyfin.Plugin.EasyPlugin.dll meta.json
+          # Fixed entry times and no extra attributes, so the archive does not vary
+          # just because it was built at a different moment.
+          touch -d "$TS" Jellyfin.Plugin.EasyPlugin.dll meta.json
+          zip -X "$ZIP" Jellyfin.Plugin.EasyPlugin.dll meta.json
           MD5="$(md5sum "$ZIP" | awk '{print $1}')"
           echo "$MD5" > "${ZIP}.md5"
+
+          {
+            echo "EP_VERSION=$VERSION"
+            echo "EP_MD5=$MD5"
+            echo "EP_TIMESTAMP=$TS"
+            echo "EP_URL=https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/${ZIP}"
+          } >> "$GITHUB_ENV"
+
           {
             echo "### Plugin package"
             echo "- file: \`$ZIP\` (Jellyfin.Plugin.EasyPlugin.dll + meta.json)"
-            echo "- md5: \`$MD5\`  <- paste into manifest.json"
+            echo "- md5: \`$MD5\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create GitHub release
@@ -53,3 +73,37 @@ jobs:
           files: |
             package/*.zip
             package/*.md5
+
+      # Jellyfin refuses to install a version whose checksum does not match, so the
+      # manifest has to name the artifact that was actually published. Doing that by
+      # hand did not survive contact with re-runs — this keeps the two in step, and
+      # repairs an entry that has already drifted.
+      - name: Update manifest.json on main
+        run: |
+          set -euo pipefail
+          cp .github/scripts/update-manifest.py /tmp/update-manifest.py
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git checkout -B main origin/main
+            python3 /tmp/update-manifest.py
+
+            if git diff --quiet -- manifest.json; then
+              echo "manifest.json already matches the published artifact."
+              exit 0
+            fi
+
+            git add manifest.json
+            git commit -m "manifest: publish ${EP_VERSION} (md5 ${EP_MD5})" \
+                       -m "Written by the release workflow for ${GITHUB_REF_NAME}."
+            if git push origin main; then
+              exit 0
+            fi
+            echo "push rejected (main moved?), retrying — attempt ${attempt}"
+          done
+
+          echo "::error::could not update manifest.json on main after 3 attempts"
+          exit 1
