@@ -98,13 +98,28 @@ exceeds `EpMaxDllBytes` — see the note in the `.csproj` for why that budget ex
 
 ## Release
 
+Bump `AssemblyVersion`/`FileVersion` in the `.csproj` and add the entry to `build.yaml`'s changelog,
+then tag:
+
 ```bash
-git tag v0.0.7
-git push origin v0.0.7
+git tag v0.0.8
+git push origin v0.0.8
 ```
 
-The Release workflow builds the DLL, packages it with `meta.json` into a zip and prints the MD5; put
-that MD5 into `manifest.json`'s version entry.
+The Release workflow does the rest: it builds the DLL, packages it with `meta.json` into a zip,
+publishes both the zip and its `.md5` as release assets, and then **commits the matching entry to
+`manifest.json` on `main` itself** (`.github/scripts/update-manifest.py`). A new version takes its
+changelog text from `build.yaml`; an entry that already exists keeps its wording and only has its
+URL, checksum and timestamp refreshed.
+
+That last part exists because Jellyfin verifies the checksum before installing, so a manifest entry
+that does not match the published zip makes that version un-installable — and the manifest used to
+be maintained by hand. Re-running a release rebuilds the artifact, which changes the checksum;
+0.0.4 and 0.0.6 both silently broke that way before this was automated. Packaging is now
+deterministic too (the timestamp comes from the tagged commit rather than the clock, and the zip is
+written with fixed entry times), so a re-run of the same tag normally produces the identical
+archive. The compiler output can still shift if the pinned `9.0.x` SDK resolves to a newer patch —
+which is precisely why the workflow rewrites the manifest instead of trusting that it will not.
 
 ## Caveats
 
