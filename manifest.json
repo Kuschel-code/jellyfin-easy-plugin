@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/Kuschel-code/jellyfin-easy-plugin/main/logo.svg",
     "versions": [
       {
+        "version": "0.0.8.0",
+        "changelog": "Fixes losing your whole sidebar setup. The settings page rebuilds the saved layout from the rows it has drawn, but it treated \"could not fetch the plugin list\" as \"there are no plugins\" - so right after updating the plugin, while the server was still coming up, touching any switch saved an empty layout over the real one. The layout is now only written when a plugin list actually rendered, and plugins missing from a partial list keep their hidden/added/renamed state and their group instead of being dropped.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Kuschel-code/jellyfin-easy-plugin/releases/download/v0.0.8/easy-plugin_0.0.8.zip",
+        "checksum": "990f0ff6655cac6a57b0b37a8c2c6b7f",
+        "timestamp": "2026-08-03T23:04:06Z"
+      },
+      {
         "version": "0.0.7.0",
         "changelog": "Rename any sidebar entry, give groups a Material icon, and optionally show a filter box above the plugin list. The other sidebar sections (Server, Devices, Live TV, ...) can now be hidden and reordered too. Each user can have their own layout, and a group's collapse state is remembered server-side so it follows you across browsers. Entries and whole groups can be moved with up/down buttons, which finally makes the settings page usable on touch devices and by keyboard. Config import/export as JSON. The layout endpoint now requires a signed-in caller instead of being public. Fixes: a group whose plugins were all hidden left an empty header in the sidebar, and the injected stylesheet was being rewritten in a loop.",
         "targetAbi": "10.11.0.0",
@@ -21,7 +29,7 @@
         "changelog": "Movable groups: drag a group's title-bar handle to place the whole group anywhere in the list; groups and ungrouped plugins now share one order, mirrored 1:1 by the sidebar (previously groups were stuck below all ungrouped entries). Deleting a group keeps its plugins in place. Fixed duplicate event listeners after \"+ New group\" (settings arrow appeared dead).",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/Kuschel-code/jellyfin-easy-plugin/releases/download/v0.0.6/easy-plugin_0.0.6.zip",
-        "checksum": "06fe7c47029b99bc11e88080f664266b",
+        "checksum": "678a5c94569704791f53a660c49aacee",
         "timestamp": "2026-07-03T18:08:59Z"
       },
       {
@@ -37,7 +45,7 @@
         "changelog": "The Plugins section is no longer pinned to the top of the sidebar; it keeps its normal Jellyfin position. Upgrading clears the old pin automatically. Hiding, reordering within the section and live updates are unchanged.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/Kuschel-code/jellyfin-easy-plugin/releases/download/v0.0.4/easy-plugin_0.0.4.zip",
-        "checksum": "8024286d4246264e1df54b71190f82d2",
+        "checksum": "3dc595b9e983e32512c8f0bc65395733",
         "timestamp": "2026-06-25T17:44:17Z"
       },
       {
