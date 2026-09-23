@@ -11,7 +11,7 @@
       {
         "version": "0.1.0.0",
         "changelog": "Jellyfin 12. Requires Jellyfin 12.0 or newer. Built for .NET 10 against Jellyfin.Controller 12.0.0 with targetAbi 12.0.0.0, so it loads on 12.0 and 12.1; Jellyfin 10.11 servers keep offering the previous release. The sidebar selectors it relies on (plugins-subheader, #/configurationpage?name=) are unchanged in jellyfin-web 12.1.",
-        "targetAbi": "10.11.0.0",
+        "targetAbi": "12.0.0.0",
         "sourceUrl": "https://github.com/Kuschel-code/jellyfin-easy-plugin/releases/download/v0.1.0/easy-plugin_0.1.0.zip",
         "checksum": "ee1f3830b4109eede817766f0066e3e0",
         "timestamp": "2026-09-23T03:10:09Z"

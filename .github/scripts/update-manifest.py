@@ -30,6 +30,16 @@ MANIFEST = "manifest.json"
 BUILD_YAML = "Jellyfin.Plugin.EasyPlugin/build.yaml"
 
 
+def target_abi_from_build_yaml():
+    # The ABI decides which servers see the entry, so it must follow build.yaml rather than
+    # a constant: a hardcoded "10.11.0.0" offered the net10 0.1.0 build to 10.11 servers.
+    with open(BUILD_YAML, encoding="utf-8") as handle:
+        match = re.search(r'^targetAbi:\s*"([^"]+)"', handle.read(), re.M)
+    if not match:
+        fail(f"no targetAbi in {BUILD_YAML}")
+    return match.group(1)
+
+
 def fail(message):
     print(f"error: {message}", file=sys.stderr)
     sys.exit(1)
@@ -95,6 +105,7 @@ def main():
         fail(f"{MANIFEST} is not in the expected shape")
 
     versions = data[0]["versions"]
+    target_abi = target_abi_from_build_yaml()
     existing = next((v for v in versions if str(v.get("version")) == version), None)
 
     if existing:
@@ -102,6 +113,7 @@ def main():
         existing["sourceUrl"] = url
         existing["checksum"] = checksum
         existing["timestamp"] = timestamp
+        existing["targetAbi"] = target_abi
         action = "unchanged" if was == checksum else f"updated (was {was})"
         print(f"{version}: {action}")
     else:
@@ -110,7 +122,7 @@ def main():
             {
                 "version": version,
                 "changelog": changelog,
-                "targetAbi": "10.11.0.0",
+                "targetAbi": target_abi,
                 "sourceUrl": url,
                 "checksum": checksum,
                 "timestamp": timestamp,
