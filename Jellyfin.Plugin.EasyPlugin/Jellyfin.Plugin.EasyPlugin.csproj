@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
@@ -9,13 +9,13 @@
     <LangVersion>latest</LangVersion>
     <RootNamespace>Jellyfin.Plugin.EasyPlugin</RootNamespace>
     <AssemblyName>Jellyfin.Plugin.EasyPlugin</AssemblyName>
-    <AssemblyVersion>0.0.8.0</AssemblyVersion>
-    <FileVersion>0.0.8.0</FileVersion>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Jellyfin.Controller" Version="10.11.11" />
+    <PackageReference Include="Jellyfin.Controller" Version="12.0.0" />
   </ItemGroup>
 
   <!-- The API controller needs ASP.NET Core types; the server provides them at runtime. -->

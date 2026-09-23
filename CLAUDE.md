@@ -1,6 +1,6 @@
 # Easy Plugin — Jellyfin admin sidebar organiser
 
-Jellyfin 10.11.x / .NET 9 plugin that hides, reorders, groups and renames plugin entries in
+Jellyfin 12.x / .NET 10 plugin that hides, reorders, groups and renames plugin entries in
 the admin sidebar, and opens any plugin's settings inline. Plugin GUID
 `f4acffe0-0347-4b20-a69d-d50d6b2b4a7e`.
 
@@ -47,7 +47,7 @@ renaming, filtering and the config page's save round-trip.
   reported to corrupt the DLL at offset 0xB000. The budget has been exceeded since 0.0.5
   with no recurrence, so a warning here is a decision to make, not a build failure to
   "fix" by raising the number without reading the note in the `.csproj`.
-- **The sidebar selectors are pinned to jellyfin-web 10.11**: the `plugins-subheader` list
+- **The sidebar selectors are pinned to jellyfin-web 10.11/12** (both still present in 12.1): the `plugins-subheader` list
   id and the `#/configurationpage?name=` href format. A future web build that renames either
   makes the plugin do nothing at all, with no error — check `Web/client.js` first when
   "it stopped working" after a server update.

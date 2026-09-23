@@ -1,6 +1,6 @@
 # Easy Plugin
 
-A Jellyfin plugin (server **10.11.x / .NET 9**) that tidies the admin sidebar: **hide**, **reorder**
+A Jellyfin plugin (server **12.x / .NET 10**) that tidies the admin sidebar: **hide**, **reorder**
 and even **add** plugin configuration entries — and open any plugin's settings **inline** — all from
 one auto-saving page.
 
@@ -64,7 +64,13 @@ There is **no on-disk fallback** by design (the container's jellyfin-web is typi
 
 ## Requirements
 
-- Jellyfin **10.11.x**
+- Jellyfin **12.x** (12.0 or newer). The catalog only offers the build that fits your server:
+
+  | Jellyfin server | Easy Plugin | .NET |
+  |---|---|---|
+  | **12.0, 12.1+** | **0.1.x** | 10 |
+  | 10.11.x | 0.0.9 (last 10.11 build) | 9 |
+
 - A File Transformation provider — the standalone plugin (GUID `5e87cc92-571a-4d8d-8d98-d2d4147f9f90`),
   or Custom Theme's bundled provider, or let Easy Plugin auto-install it.
 
@@ -102,8 +108,8 @@ Bump `AssemblyVersion`/`FileVersion` in the `.csproj` and add the entry to `buil
 then tag:
 
 ```bash
-git tag v0.0.8
-git push origin v0.0.8
+git tag v0.1.0
+git push origin v0.1.0
 ```
 
 The Release workflow does the rest: it builds the DLL, packages it with `meta.json` into a zip,
@@ -123,7 +129,7 @@ which is precisely why the workflow rewrites the manifest instead of trusting th
 
 ## Caveats
 
-- Verified against jellyfin-web **10.11**. If a future web build changes the `plugins-subheader`
+- Verified against jellyfin-web **10.11** and **12.1**. If a future web build changes the `plugins-subheader`
   list id or the `#/configurationpage?name=` href format, update the selectors in `Web/client.js`.
 - Only `/EasyPlugin/ClientScript` is anonymous, because a `<script src>` tag carries no credentials.
   The layout endpoint needs a signed-in caller, and the script borrows the web app's access token to

@@ -19,7 +19,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
 
       - name: Build
         run: dotnet build Jellyfin.Plugin.EasyPlugin/Jellyfin.Plugin.EasyPlugin.csproj -c Release
@@ -31,7 +31,7 @@ jobs:
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
           GUID="f4acffe0-0347-4b20-a69d-d50d6b2b4a7e"
-          DLL="Jellyfin.Plugin.EasyPlugin/bin/Release/net9.0/Jellyfin.Plugin.EasyPlugin.dll"
+          DLL="Jellyfin.Plugin.EasyPlugin/bin/Release/net10.0/Jellyfin.Plugin.EasyPlugin.dll"
 
           # Stamp from the tagged commit, not from "now". Wall-clock time made every
           # re-run produce a different zip, and therefore a different checksum, which
@@ -42,7 +42,7 @@ jobs:
           cp "$DLL" package/
 
           # meta.json so the zip is a valid Jellyfin plugin folder (no .pdb / .deps.json).
-          printf '%s' "{\"category\":\"General\",\"guid\":\"$GUID\",\"name\":\"Easy Plugin\",\"description\":\"Show, hide and reorder plugin configuration entries in the Jellyfin admin sidebar.\",\"overview\":\"Tidy the admin sidebar: hide and reorder plugin entries.\",\"owner\":\"Kuschel-code\",\"targetAbi\":\"10.11.0.0\",\"framework\":\"net9.0\",\"version\":\"${VERSION}.0\",\"changelog\":\"Release ${VERSION}\",\"timestamp\":\"$TS\"}" > package/meta.json
+          printf '%s' "{\"category\":\"General\",\"guid\":\"$GUID\",\"name\":\"Easy Plugin\",\"description\":\"Show, hide and reorder plugin configuration entries in the Jellyfin admin sidebar.\",\"overview\":\"Tidy the admin sidebar: hide and reorder plugin entries.\",\"owner\":\"Kuschel-code\",\"targetAbi\":\"12.0.0.0\",\"framework\":\"net10.0\",\"version\":\"${VERSION}.0\",\"changelog\":\"Release ${VERSION}\",\"timestamp\":\"$TS\"}" > package/meta.json
 
           cd package
           ZIP="easy-plugin_${VERSION}.zip"

@@ -1,9 +1,9 @@
 ---
 name: "Easy Plugin"
 guid: "f4acffe0-0347-4b20-a69d-d50d6b2b4a7e"
-version: "0.0.8.0"
-targetAbi: "10.11.0.0"
-framework: "net9.0"
+version: "0.1.0.0"
+targetAbi: "12.0.0.0"
+framework: "net10.0"
 owner: "Kuschel-code"
 overview: "Show, hide and reorder plugin entries in the Jellyfin admin sidebar."
 description: >
@@ -15,6 +15,9 @@ category: "General"
 artifacts:
   - "Jellyfin.Plugin.EasyPlugin.dll"
 changelog: >
+  0.1.0.0 - Jellyfin 12. Requires Jellyfin 12.0 or newer. Built for .NET 10 against Jellyfin.Controller 12.0.0 with targetAbi 12.0.0.0, so it loads on 12.0 and 12.1; Jellyfin 10.11 servers keep offering the previous release. The sidebar selectors it relies on
+  (plugins-subheader, #/configurationpage?name=) are unchanged in jellyfin-web 12.1.
+
   0.0.8.0 - Fixes losing your whole sidebar setup. The settings page rebuilds the
   saved layout from the rows it has drawn, but it treated "could not fetch the
   plugin list" as "there are no plugins" - so right after updating the plugin,
